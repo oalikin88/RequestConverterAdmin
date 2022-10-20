@@ -8,26 +8,31 @@ package com.mycompany.requestconverteradmin.data;
  *
  * @author 041AlikinOS
  */
-public class Client {
-    
+public class Record {
+    private int id;
     private String subject;
     private String opfr;
     private String upfr;
     private String name;
     
-    public Client() {}
+    public Record() {}
     
-    public Client(String name) {
+    public Record(String name) {
         this.name = name;
     }
     
-    public Client(String subject, String opfr, String upfr, String name) {
+    public Record(int id, String subject, String opfr, String upfr, String name) {
+        this.id = id;
         this.name = subject;
         this.name = opfr;
         this.name = upfr;
         this.name = name;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+    
     public void setSubject(String subject) {
         this.subject = subject;
     }
@@ -45,7 +50,9 @@ public class Client {
     }
     
     
-    
+    public int getId() {
+        return id;
+    }
     
     public String getName() {
         return name;

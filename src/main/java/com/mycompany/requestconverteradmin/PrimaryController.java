@@ -1,47 +1,71 @@
 package com.mycompany.requestconverteradmin;
 
-import com.mycompany.requestconverteradmin.data.Client;
+import com.mycompany.requestconverteradmin.data.Record;
 import com.mycompany.requestconverteradmin.data.ClientDAO;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.TypeVariable;
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
+import javafx.event.EventDispatchChain;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.skin.TreeViewSkin;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.util.Pair;
 
 public class PrimaryController implements Initializable {
 
-   
-    
     @FXML
     private ResourceBundle resources;
 
     @FXML
     private URL location;
 
-    
-
     @FXML
     private MenuBar menuBar;
-
-
 
     @FXML
     private ProgressIndicator statusIndicator;
@@ -51,94 +75,208 @@ public class PrimaryController implements Initializable {
 
     @FXML
     private Label statusOutput;
-    
+
     @FXML
     private Button btn;
-    
+
     @FXML
     private TextField subjectID;
-       
+
     @FXML
     private TextField opfrID;
-    
+
     @FXML
     private TextField upfrID;
-    
+
     @FXML
-    private TreeView<Client> tree;
-    
-     private static ObservableList<Client> clientData = FXCollections.observableArrayList();
-    
+    private TreeView<Record> tree;
+
+    @FXML
+    private MenuItem addElement;
+
+    @FXML
+    private MenuItem delElement;
+
+    @FXML
+    private TextField addNameElementId;
+
+    @FXML
+    private TextField addOpfrId;
+
+    @FXML
+    private TextField addSubjectId;
+
+    @FXML
+    private TextField addUpfrId;
+
+    private int recordID;
+    private List<Record> records;
+    private TreeItem<Record> selectedItem;
+
     @Override
-    public void initialize(URL location, ResourceBundle resources)  {
-        initData();
+    public void initialize(URL location, ResourceBundle resources) {
+        
+        records = ClientDAO.getInstance().findAll();
         // устанавливаем тип и значение которое должно хранится в колонке
-        
+
         // заполняем таблицу данными
-        var clients2 = ClientDAO.getInstance().findAll();
-        TreeItem<Client> root = new TreeItem<>(new Client("Регион"));
-         TreeItem<Client> parent = new TreeItem<>();
+        TreeItem<Record> root = new TreeItem<>(new Record("Регионы"));
+        TreeItem<Record> parent = new TreeItem<>();
+        
         String buf = "";
-        
-        for(int i = 0; i < clients2.size(); i++) {
-            
-            if(!buf.equals(clients2.get(i).getSubject()) ) {
-                parent = new TreeItem<>(clients2.get(i));
-                        root.getChildren().add(parent);
+
+        for (int i = 0; i < records.size(); i++) {
+
+            if (!buf.equals(records.get(i).getSubject())) {
+                parent = new TreeItem<>(records.get(i));
+                root.getChildren().add(parent);
             } else {
-                parent.getChildren().add(new TreeItem<>(clients2.get(i)));
-                
-            }      
-            buf = clients2.get(i).getSubject();  
-            
+                parent.getChildren().add(new TreeItem<>(records.get(i)));
+
+            }
+            buf = records.get(i).getSubject();
+
         }
-        
+
         root.setExpanded(true);
         tree.setRoot(root);
-        
-         MultipleSelectionModel<TreeItem<Client>> selectionModel = tree.getSelectionModel();
-         
-         tree.getSelectionModel().selectedItemProperty().addListener( new ChangeListener() {
+        MultipleSelectionModel<TreeItem<Record>> selectionModel = tree.getSelectionModel();
 
-        @Override
-        public void changed(ObservableValue observable, Object oldValue,
-                Object newValue) {
+        tree.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
 
-            TreeItem<Client> selectedItem = (TreeItem<Client>) newValue;
-            subjectID.setText(selectedItem.getValue().getSubject());
-            opfrID.setText(selectedItem.getValue().getOpfr());
-            upfrID.setText(selectedItem.getValue().getUpfr());
-            System.out.println("Selected Text : " + selectedItem.getValue().getSubject());
-            // do what ever you want 
-        }
+            @Override
+            public void changed(ObservableValue observable, Object oldValue,
+                    Object newValue) {
 
-      });
+                selectedItem = (TreeItem<Record>) newValue;
 
-       // subjectID.setText(selectionModel.getSelectedItem().getValue().getSubject()); 
-        
-        btn.setOnAction(event -> {
-            System.out.println(selectionModel.getSelectedItem().getValue().getSubject());
+                recordID = selectedItem.getValue().getId();
+                subjectID.setText(selectedItem.getValue().getSubject());
+                opfrID.setText(selectedItem.getValue().getOpfr());
+                upfrID.setText(selectedItem.getValue().getUpfr());
+
+                System.out.println("Selected Text : " + selectedItem.getValue().getUpfr());
+                // do what ever you want 
+            }
+
         });
-    }
-    
-   
 
-    private void initData() {
-        var clients = ClientDAO.getInstance().findAll();
-        for (Client client : clients) {
-            clientData.add(new Client(
-                    client.getSubject(),
-                    client.getOpfr(),
-                    client.getUpfr(),
-                    client.getName()
-            ));
-        }
-    
+        tree.setOnMouseMoved(event -> {
+//            Annotation[] annotations = event.getPickResult().getIntersectedNode().accessibleTextProperty().getBean().getClass().getAnnotations();
+//           for(Annotation a : annotations) {
+//               System.out.println(a.annotationType());
+//               for(Method m : a.annotationType().getMethods()) {
+//                   Annotation[][] parameterAnnotations = m.getParameterAnnotations();
+//                   for(int i = 0; i < parameterAnnotations.length; i++) {
+//                       for(int j = 0; j < i; j++) {
+//                           System.out.println(parameterAnnotations[i][j]);
+//                       }
+//                   }
+//                       System.out.println(m.getParameterAnnotations());
+//                   
+//                   
+//               }
+//           }
+
+//             System.out.println("********************************");
+//
+//            Node intersectedNode = event.getPickResult().getIntersectedNode();
+//           String s =  intersectedNode.toString();
+//             System.out.println(s);
+//             System.out.println(event.getPickResult().getIntersectedNode().getStyleClass());
+//             
+//             System.out.println("--------------");
+//        
+//          System.out.println("*****");
+        });
+
+        addElement.setOnAction(event -> {
+
+            Dialog<ButtonType> dialog = new Dialog();
+            DialogPane dialogPane = dialog.getDialogPane();
+            dialog.setTitle("Добавление нового элемента");
+            dialog.setHeaderText("Добавление нового элемента в " + selectionModel.getSelectedItems().iterator().next().getParent().getValue());
+
+            GridPane gridPane = new GridPane();
+            gridPane.setVgap(10);
+            gridPane.setHgap(10);
+            dialogPane.setContent(gridPane);
+
+            TextField name = new TextField();
+
+            TextField code1 = new TextField();
+            TextField code2 = new TextField();
+            TextField code3 = new TextField();
+            HBox hbox1 = new HBox();
+            VBox vbox = new VBox();
+            StackPane stackPane1 = new StackPane();
+            StackPane stackPane2 = new StackPane();
+            StackPane stackPane3 = new StackPane();
+
+            stackPane1.getChildren().add(code1);
+            stackPane2.getChildren().add(code2);
+            stackPane3.getChildren().add(code3);
+
+            StackPane.setMargin(code1, new Insets(15, 15, 15, 15));
+            StackPane.setMargin(code2, new Insets(15, 15, 15, 15));
+            StackPane.setMargin(code3, new Insets(15, 15, 15, 15));
+
+            hbox1.getChildren().addAll(stackPane1, stackPane2, stackPane3);
+            vbox.getChildren().add(name);
+            VBox.setMargin(name, new Insets(25, 15, 0, 15));
+            Label nameLabel = new Label("Название элемента");
+            Label codeLabel = new Label("Код");
+            gridPane.add(nameLabel, 0, 0);
+            gridPane.add(vbox, 1, 0);
+            gridPane.add(codeLabel, 0, 1);
+            gridPane.add(hbox1, 1, 1);
+
+            GridPane.setMargin(nameLabel, new Insets(25, 0, 0, 15));
+            GridPane.setMargin(codeLabel, new Insets(0, 0, 0, 15));
+            dialog.getDialogPane().getButtonTypes().addAll(
+                    new ButtonType("Добавить", ButtonBar.ButtonData.OK_DONE),
+                    new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE));
+           
+            Optional<ButtonType> result = dialog.showAndWait();
+            
+            if(result.isPresent()) {
+                if(result.orElseThrow().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
+                    String subject = code1.getText();
+                    String opfr = code2.getText();
+                    String upfr = code3.getText();
+                    String nameRegion = name.getText();
+                    ClientDAO.getInstance().addRecord(subject, opfr, upfr, nameRegion);
+                    tree.refresh();
+                    System.out.println(dialog.resultProperty());
+                }
+            } else if(result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
+                System.out.println("Нажата кнопка отмена");
+            }
+
+        });
+
+    }
+
+    @FXML
+    public void submit() {
+        String subject = subjectID.getText();
+        String opfr = opfrID.getText();
+        String upfr = upfrID.getText();
+
+        ClientDAO.getInstance().editRecord(recordID, subject, opfr, upfr);
+        tree.refresh();
+        updateTreeViewItem();
+
+        System.out.println("Submit");
+    }
+
+    private void updateTreeViewItem() {
+        TreeItem selectedItem = tree.getSelectionModel().getSelectedItem();
+        Record selectedClient = (Record) selectedItem.getValue();
+        selectedClient.setSubject(subjectID.getText());
+        selectedClient.setOpfr(opfrID.getText());
+        selectedClient.setUpfr(upfrID.getText());
 
     }
 
 }
-
-
-
-
