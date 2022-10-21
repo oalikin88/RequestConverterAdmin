@@ -2,6 +2,7 @@ package com.mycompany.requestconverteradmin;
 
 import com.mycompany.requestconverteradmin.data.Record;
 import com.mycompany.requestconverteradmin.data.ClientDAO;
+import com.mycompany.requestconverteradmin.data.TreeViewManipulations;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -41,6 +42,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -120,30 +122,9 @@ public class PrimaryController implements Initializable {
         records = ClientDAO.getInstance().findAll();
         
          // Формируем список регионов и заполняем таблицу данными
-        TreeItem<Record> root = new TreeItem<>(new Record("Регионы"));
-        TreeItem<Record> parent = new TreeItem<>();
-        List<Record> parentsList = new ArrayList<>();
-
-        for (int i = 0; i < records.size(); i++) {
-            if (records.get(i).getUpfr().equals("000")) {
-                parentsList.add(records.get(i));
-                System.out.println(records.get(i));
-            }
-        }
- 
-        for(int i = 0; i < parentsList.size(); i++) {
-            parent = new TreeItem<>(parentsList.get(i));
-            root.getChildren().add(parent);
-            for(int j = 0; j < records.size(); j++) {
-                if(records.get(j).getSubject().equals(parentsList.get(i).getSubject()) 
-                && !records.get(j).getUpfr().equals(parentsList.get(i).getUpfr())) {
-                    parent.getChildren().add(new TreeItem<>(records.get(j)));
-                }
-            }
-        }
-
-        root.setExpanded(true);
+        TreeItem<Record> root = TreeViewManipulations.updateTreeViewList(records);
         tree.setRoot(root);
+        
         MultipleSelectionModel<TreeItem<Record>> selectionModel = tree.getSelectionModel();
 
         tree.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
@@ -158,9 +139,8 @@ public class PrimaryController implements Initializable {
                 subjectID.setText(selectedItem.getValue().getSubject());
                 opfrID.setText(selectedItem.getValue().getOpfr());
                 upfrID.setText(selectedItem.getValue().getUpfr());
-
+                
                 System.out.println("Selected Text : " + selectedItem.getValue().getUpfr());
-                // do what ever you want 
             }
 
         });
@@ -195,9 +175,8 @@ public class PrimaryController implements Initializable {
         });
 
         // При нажатии на кнопку добавить создаём диалоговое окно с формой для ввода нового элемента
-        
         addElement.setOnAction(event -> {
-
+            
             Dialog<ButtonType> dialog = new Dialog();
             DialogPane dialogPane = dialog.getDialogPane();
             dialog.setTitle("Добавление нового элемента");
@@ -247,20 +226,28 @@ public class PrimaryController implements Initializable {
 
             if (result.isPresent()) {
                 if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
+                    
                     String subject = code1.getText();
                     String opfr = code2.getText();
                     String upfr = code3.getText();
                     String nameRegion = name.getText();
                     ClientDAO.getInstance().addRecord(subject, opfr, upfr, nameRegion);
+                    Record rec = new Record(subject, opfr, upfr, nameRegion);
+                    TreeItem<Record> newRecordItem = new TreeItem<>(rec);
+                   selectedItem.getParent().getChildren().add(newRecordItem);
                     tree.refresh();
                     System.out.println(dialog.resultProperty());
                 }
             } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
                 System.out.println("Нажата кнопка отмена");
             }
+            
+            
 
         });
 
+     
+        
     }
 
     @FXML

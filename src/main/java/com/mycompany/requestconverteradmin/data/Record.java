@@ -20,6 +20,15 @@ public class Record {
     public Record(String name) {
         this.name = name;
     }
+
+    public Record(String subject, String opfr, String upfr, String name) {
+        this.subject = subject;
+        this.opfr = opfr;
+        this.upfr = upfr;
+        this.name = name;
+    }
+    
+    
     
     public Record(int id, String subject, String opfr, String upfr, String name) {
         this.id = id;
