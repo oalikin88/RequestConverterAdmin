@@ -76,4 +76,48 @@ public class Record {
     public String toString()  {
         return this.name;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        
+        if(obj == null) {
+            return false;
+        }
+        
+        if(obj.getClass() != this.getClass()) {
+            return false;
+        }
+        
+        Record other = (Record) obj;
+        
+        if((this.name == null) ? (other.name != null) : !this.name.equals(other.name)) {
+            return false;  
+        }
+        
+        if((this.opfr == null) ? (other.opfr != null) : !this.opfr.equals(other.opfr)) {
+            return false;
+        }
+        
+        if((this.upfr == null) ? (other.upfr != null) : !this.upfr.equals(other.upfr)) {
+            return false;
+        }
+        
+        if((this.subject == null) ? (other.subject != null) : !this.equals(other.subject)) {
+            return false;
+        }
+        
+        return true; 
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 53 * hash + (this.name != null ? this.name.hashCode() : 0);
+        hash = 53 * hash + (this.opfr != null ? this.opfr.hashCode() : 0);
+        hash = 53 * hash + (this.upfr != null ? this.upfr.hashCode() : 0);
+        hash = 53 * hash + (this.subject != null ? this.subject.hashCode() : 0);
+        return hash;
+    }
+    
+    
 }

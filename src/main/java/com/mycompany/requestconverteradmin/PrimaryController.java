@@ -9,6 +9,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.TypeVariable;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -115,27 +116,30 @@ public class PrimaryController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        
-        records = ClientDAO.getInstance().findAll();
-        // устанавливаем тип и значение которое должно хранится в колонке
 
-        // заполняем таблицу данными
+        records = ClientDAO.getInstance().findAll();
+        
+         // Формируем список регионов и заполняем таблицу данными
         TreeItem<Record> root = new TreeItem<>(new Record("Регионы"));
         TreeItem<Record> parent = new TreeItem<>();
-        
-        String buf = "";
+        List<Record> parentsList = new ArrayList<>();
 
         for (int i = 0; i < records.size(); i++) {
-
-            if (!buf.equals(records.get(i).getSubject())) {
-                parent = new TreeItem<>(records.get(i));
-                root.getChildren().add(parent);
-            } else {
-                parent.getChildren().add(new TreeItem<>(records.get(i)));
-
+            if (records.get(i).getUpfr().equals("000")) {
+                parentsList.add(records.get(i));
+                System.out.println(records.get(i));
             }
-            buf = records.get(i).getSubject();
-
+        }
+ 
+        for(int i = 0; i < parentsList.size(); i++) {
+            parent = new TreeItem<>(parentsList.get(i));
+            root.getChildren().add(parent);
+            for(int j = 0; j < records.size(); j++) {
+                if(records.get(j).getSubject().equals(parentsList.get(i).getSubject()) 
+                && !records.get(j).getUpfr().equals(parentsList.get(i).getUpfr())) {
+                    parent.getChildren().add(new TreeItem<>(records.get(j)));
+                }
+            }
         }
 
         root.setExpanded(true);
@@ -190,6 +194,8 @@ public class PrimaryController implements Initializable {
 //          System.out.println("*****");
         });
 
+        // При нажатии на кнопку добавить создаём диалоговое окно с формой для ввода нового элемента
+        
         addElement.setOnAction(event -> {
 
             Dialog<ButtonType> dialog = new Dialog();
@@ -236,11 +242,11 @@ public class PrimaryController implements Initializable {
             dialog.getDialogPane().getButtonTypes().addAll(
                     new ButtonType("Добавить", ButtonBar.ButtonData.OK_DONE),
                     new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE));
-           
+
             Optional<ButtonType> result = dialog.showAndWait();
-            
-            if(result.isPresent()) {
-                if(result.orElseThrow().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
+
+            if (result.isPresent()) {
+                if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
                     String subject = code1.getText();
                     String opfr = code2.getText();
                     String upfr = code3.getText();
@@ -249,7 +255,7 @@ public class PrimaryController implements Initializable {
                     tree.refresh();
                     System.out.println(dialog.resultProperty());
                 }
-            } else if(result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
+            } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
                 System.out.println("Нажата кнопка отмена");
             }
 
