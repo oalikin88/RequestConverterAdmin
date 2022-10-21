@@ -2,7 +2,10 @@ package com.mycompany.requestconverteradmin;
 
 import com.mycompany.requestconverteradmin.data.Record;
 import com.mycompany.requestconverteradmin.data.ClientDAO;
+import com.mycompany.requestconverteradmin.data.Content;
 import com.mycompany.requestconverteradmin.data.TreeViewManipulations;
+import java.io.File;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -22,6 +25,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
+import javafx.event.ActionEvent;
 import javafx.event.EventDispatchChain;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
@@ -57,6 +61,10 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.Pair;
 
 public class PrimaryController implements Initializable {
@@ -70,6 +78,9 @@ public class PrimaryController implements Initializable {
     @FXML
     private MenuBar menuBar;
 
+    @FXML
+    private MenuItem about;
+    
     @FXML
     private ProgressIndicator statusIndicator;
 
@@ -286,6 +297,22 @@ public class PrimaryController implements Initializable {
         });
 
     }
+    
+    @FXML
+    void actionImport(ActionEvent event) throws IOException {
+        
+        Stage stage = new Stage();
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Выберите файл для импорта");
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "/desktop"));
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("csv", "*.csv"));
+        File selectedFile = fileChooser.showOpenDialog(stage);
+        List<String> content = Content.getContent(selectedFile);
+        String[][] prepareContent = Content.listToTwoArray(content);
+        ClientDAO.getInstance().importRecords(prepareContent);
+        
+        
+    }
 
     @FXML
     public void submit() {
@@ -299,6 +326,31 @@ public class PrimaryController implements Initializable {
 
         System.out.println("Submit");
     }
+    
+        @FXML
+    void actionAbout(ActionEvent event) {
+         Dialog<ButtonType> dialog = new Dialog();
+            DialogPane dialogPane = dialog.getDialogPane();
+            dialog.setWidth(300);
+            dialog.setHeight(300);
+            dialogPane.setMaxHeight(300);
+            dialogPane.setMaxWidth(300);
+            dialog.setTitle("О программе");
+            dialog.setHeaderText(null);
+            TextFlow textFlow = new TextFlow();
+            VBox vBox = new VBox();
+            Text author = new Text("by Oleg Alikin");
+            Text info = new Text("Отдел эксплуатации и сопровождения информационных подсистем Отделения ПФР по Белгородской области.");
+            info.setWrappingWidth(250);
+            textFlow.getChildren().add(vBox);
+            vBox.getChildren().addAll(author, info);
+            dialogPane.setContent(textFlow);
+            dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
+
+            Optional<ButtonType> result = dialog.showAndWait();  
+    }
+    
+ 
 
     private void updateTreeViewItem() {
         TreeItem selectedItem = tree.getSelectionModel().getSelectedItem();

@@ -22,6 +22,7 @@ public class ClientDAO {
     private static final String UPDATE_RECORD = "UPDATE spr set subject = ?, opfr = ?, upfr = ? where id = ?";
     private static final String ADD_RECORD = "INSERT INTO spr (subject, opfr, upfr, name) VALUES(?,?,?,?)";
     private static final String DELETE_RECORD = "DELETE FROM spr WHERE id = ?";
+    private static final String IMPORT_RECORDS = "INSERT INTO spr (subject, opfr, upfr, name) VALUES(?,?,?,?)";
 
     public List<Record> findAll() {
         try ( var connection = DBConnection.getInstance().getConnection();
@@ -95,6 +96,32 @@ public class ClientDAO {
             throwable.printStackTrace();
             throw new DaoException(throwable);
         }
+    }
+    
+    public void importRecords(String[][] input) {
+        for(int i = 0; i < input.length; i++) {
+          
+        String[] buf = new String[4];
+            for(int j = 0; j < 4; j++) {
+       
+                buf[j] = input[i][j];
+        }
+            
+         try (var connection = DBConnection.getInstance().getConnection();
+                var preparedStatement = connection.prepareStatement(IMPORT_RECORDS)) {
+            
+                preparedStatement.setString(1, buf[0]);
+                preparedStatement.setString(2, buf[1]);
+                preparedStatement.setString(3, buf[2]);
+                preparedStatement.setString(4, buf[3]);
+                preparedStatement.executeUpdate();
+            } catch (SQLException throwable) {
+                throwable.printStackTrace();
+                throw new DaoException(throwable);
+            }    
+        
+    }
+        System.out.println("Импортирование завершено");
     }
 
 }
