@@ -120,11 +120,11 @@ public class PrimaryController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         records = ClientDAO.getInstance().findAll();
-        
-         // Формируем список регионов и заполняем таблицу данными
+
+        // Формируем список регионов и заполняем таблицу данными
         TreeItem<Record> root = TreeViewManipulations.updateTreeViewList(records);
         tree.setRoot(root);
-        
+
         MultipleSelectionModel<TreeItem<Record>> selectionModel = tree.getSelectionModel();
 
         tree.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
@@ -139,8 +139,8 @@ public class PrimaryController implements Initializable {
                 subjectID.setText(selectedItem.getValue().getSubject());
                 opfrID.setText(selectedItem.getValue().getOpfr());
                 upfrID.setText(selectedItem.getValue().getUpfr());
-                
-                System.out.println("Selected Text : " + selectedItem.getValue().getUpfr());
+
+                System.out.println("Selected Text : " + selectedItem.getValue().getName());
             }
 
         });
@@ -176,11 +176,11 @@ public class PrimaryController implements Initializable {
 
         // При нажатии на кнопку добавить создаём диалоговое окно с формой для ввода нового элемента
         addElement.setOnAction(event -> {
-            
+
             Dialog<ButtonType> dialog = new Dialog();
             DialogPane dialogPane = dialog.getDialogPane();
             dialog.setTitle("Добавление нового элемента");
-            dialog.setHeaderText("Добавление нового элемента в " + selectionModel.getSelectedItems().iterator().next().getParent().getValue());
+            dialog.setHeaderText("Добавление нового элемента в " + selectionModel.getSelectedItems().iterator().next().getValue());
 
             GridPane gridPane = new GridPane();
             gridPane.setVgap(10);
@@ -226,7 +226,7 @@ public class PrimaryController implements Initializable {
 
             if (result.isPresent()) {
                 if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
-                    
+
                     String subject = code1.getText();
                     String opfr = code2.getText();
                     String upfr = code3.getText();
@@ -234,20 +234,57 @@ public class PrimaryController implements Initializable {
                     ClientDAO.getInstance().addRecord(subject, opfr, upfr, nameRegion);
                     Record rec = new Record(subject, opfr, upfr, nameRegion);
                     TreeItem<Record> newRecordItem = new TreeItem<>(rec);
-                   selectedItem.getParent().getChildren().add(newRecordItem);
+                    selectedItem.getChildren().add(newRecordItem);
                     tree.refresh();
                     System.out.println(dialog.resultProperty());
                 }
             } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
                 System.out.println("Нажата кнопка отмена");
             }
-            
-            
 
         });
 
-     
-        
+        delElement.setOnAction(event -> {
+            Dialog<ButtonType> dialog = new Dialog();
+            DialogPane dialogPane = dialog.getDialogPane();
+            dialog.setTitle("Удаление элемента");
+            dialog.setHeaderText("Вы действительно хотите удалить из списка элемент: " + selectionModel.getSelectedItems().iterator().next().getValue() + "?");
+            dialog.getDialogPane().getButtonTypes().addAll(
+                    new ButtonType("Удалить", ButtonBar.ButtonData.YES),
+                    new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE));
+
+            Optional<ButtonType> result = dialog.showAndWait();  
+            
+            
+            if (result.isPresent()) {
+                if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.YES) {
+                    int id = selectedItem.getValue().getId();
+                    ClientDAO.getInstance().deleteRecord(id);
+                    
+                    selectedItem.getParent().getChildren().remove(selectedItem);
+                      
+//                             (e -> {
+//                    
+//                        if(e.getValue().getId() == id) {
+//                            selectedItem.getParent().getChildren().remove(e);
+//                            tree.refresh();
+//                        } 
+//                    });
+                    tree.refresh();
+//                forEach(e -> {
+//                        if(e.getValue().getId() == id) {
+//                            selectedItem.getParent().getChildren().remove(e);
+//                            tree.refresh();
+//                        } 
+//                    
+//                    });
+                  
+                } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
+                    System.out.println("Нажата кнопка отмена");
+                }
+            }
+        });
+
     }
 
     @FXML
