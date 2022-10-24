@@ -329,7 +329,7 @@ public class PrimaryController implements Initializable {
                 if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.YES) {
                     int id = selectedRequestItem.getValue().getId();
                 clientRequests.deleteRequest(id);
-                    
+                       selectedRequestItem.getParent().getChildren().remove(selectedRequestItem);
                       
 //                             (e -> {
 //                    
