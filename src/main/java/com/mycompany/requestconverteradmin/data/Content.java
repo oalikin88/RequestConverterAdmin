@@ -26,7 +26,7 @@ public class Content {
     
   
     
-        public static String[][] listToTwoArray(List<String> list) {
+        public static String[][] recordListTransform(List<String> list) {
         
         int rows = list.size();
         int cells = 4;
@@ -36,14 +36,26 @@ public class Content {
         for(int rowIndex = 0; rowIndex < rows; rowIndex++) {
             arrayBuf = list.get(listIndex++).split(";");
             for(int cellIndex = 0; cellIndex < arrayBuf.length; cellIndex++) {
-                
-                     
                      array[rowIndex][cellIndex] = arrayBuf[cellIndex];
                 
                 } 
             }
-        
-        
         return array;
     }
+        
+        public static String[][] requestListTransform(List<String> list) {
+            int rows = list.size();
+            int cells = 2;
+            String [][] array = new String[rows][cells];
+            int listIndex = 0;
+            String[] arrayBuf = new String[2];
+            for(int rowIndex = 0; rowIndex < rows; rowIndex++) {
+                arrayBuf = list.get(listIndex++).split(";");
+                for(int cellIndex = 0; cellIndex < arrayBuf.length; cellIndex++) {
+                    array[rowIndex][cellIndex] = arrayBuf[cellIndex];
+                }
+            }
+            return array;
+        }
+        
 }

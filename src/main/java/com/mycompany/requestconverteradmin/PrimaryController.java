@@ -3,60 +3,34 @@ package com.mycompany.requestconverteradmin;
 import com.mycompany.requestconverteradmin.data.Record;
 import com.mycompany.requestconverteradmin.data.ClientDAO;
 import com.mycompany.requestconverteradmin.data.Content;
+import com.mycompany.requestconverteradmin.data.Request;
 import com.mycompany.requestconverteradmin.data.TreeViewManipulations;
 import java.io.File;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.TypeVariable;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
 import javafx.event.ActionEvent;
-import javafx.event.EventDispatchChain;
-import javafx.event.EventHandler;
-import javafx.event.EventType;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
-import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.ProgressIndicator;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputDialog;
-import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.control.skin.TreeViewSkin;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -65,7 +39,6 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.util.Pair;
 
 public class PrimaryController implements Initializable {
 
@@ -110,6 +83,12 @@ public class PrimaryController implements Initializable {
 
     @FXML
     private MenuItem delElement;
+    
+    @FXML
+    private MenuItem addRequestAction;
+    
+    @FXML
+    private MenuItem delRequestAction;
 
     @FXML
     private TextField addNameElementId;
@@ -122,21 +101,40 @@ public class PrimaryController implements Initializable {
 
     @FXML
     private TextField addUpfrId;
+    
+    @FXML
+    private GridPane requestGrid;
+    @FXML
+    private TextField requestValue;
+    
+    @FXML
+    private TreeView<Request> treeRequest;
+    @FXML
+    private TextField requestShortValue;
 
     private int recordID;
     private List<Record> records;
-    private TreeItem<Record> selectedItem;
+    private TreeItem<Record> selectedRecordItem;
+    private TreeItem<Request> selectedRequestItem;
+    private List<Request> requests;
+    private int requestID;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-
-        records = ClientDAO.getInstance().findAll();
+        
+        ClientDAO clientRecords = new ClientDAO();
+        ClientDAO clientRequests = new ClientDAO();
+        records = clientRecords.findAllRecords();
+        requests = clientRequests.findAllRequests();
 
         // Формируем список регионов и заполняем таблицу данными
-        TreeItem<Record> root = TreeViewManipulations.updateTreeViewList(records);
+        TreeItem<Record> root = TreeViewManipulations.updateTreeViewRecordList(records);
+        TreeItem<Request> parent = TreeViewManipulations.updateTreeViewRequestList(requests);
         tree.setRoot(root);
-
+        treeRequest.setRoot(parent);
+        
         MultipleSelectionModel<TreeItem<Record>> selectionModel = tree.getSelectionModel();
+        MultipleSelectionModel<TreeItem<Request>> selectionModelRequest = treeRequest.getSelectionModel();
 
         tree.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
 
@@ -144,17 +142,36 @@ public class PrimaryController implements Initializable {
             public void changed(ObservableValue observable, Object oldValue,
                     Object newValue) {
 
-                selectedItem = (TreeItem<Record>) newValue;
+                selectedRecordItem = (TreeItem<Record>) newValue;
 
-                recordID = selectedItem.getValue().getId();
-                subjectID.setText(selectedItem.getValue().getSubject());
-                opfrID.setText(selectedItem.getValue().getOpfr());
-                upfrID.setText(selectedItem.getValue().getUpfr());
+                recordID = selectedRecordItem.getValue().getId();
+                subjectID.setText(selectedRecordItem.getValue().getSubject());
+                opfrID.setText(selectedRecordItem.getValue().getOpfr());
+                upfrID.setText(selectedRecordItem.getValue().getUpfr());
 
-                System.out.println("Selected Text : " + selectedItem.getValue().getName());
+                System.out.println("Selected Text : " + selectedRecordItem.getValue().getName());
             }
 
         });
+        
+           treeRequest.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
+
+            @Override
+            public void changed(ObservableValue observable, Object oldValue,
+                    Object newValue) {
+
+                selectedRequestItem = (TreeItem<Request>) newValue;
+
+                requestID = selectedRequestItem.getValue().getId();
+                requestShortValue.setText(selectedRequestItem.getValue().getShortName());
+                requestValue.setText(selectedRequestItem.getValue().getName());
+               
+
+                System.out.println("Selected Text : " + selectedRequestItem.getValue().getName());
+            }
+
+        });
+        
 
         tree.setOnMouseMoved(event -> {
 //            Annotation[] annotations = event.getPickResult().getIntersectedNode().accessibleTextProperty().getBean().getClass().getAnnotations();
@@ -242,10 +259,10 @@ public class PrimaryController implements Initializable {
                     String opfr = code2.getText();
                     String upfr = code3.getText();
                     String nameRegion = name.getText();
-                    ClientDAO.getInstance().addRecord(subject, opfr, upfr, nameRegion);
+                   clientRecords.addRecord(subject, opfr, upfr, nameRegion);
                     Record rec = new Record(subject, opfr, upfr, nameRegion);
                     TreeItem<Record> newRecordItem = new TreeItem<>(rec);
-                    selectedItem.getChildren().add(newRecordItem);
+                    selectedRecordItem.getChildren().add(newRecordItem);
                     tree.refresh();
                     System.out.println(dialog.resultProperty());
                 }
@@ -269,10 +286,10 @@ public class PrimaryController implements Initializable {
             
             if (result.isPresent()) {
                 if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.YES) {
-                    int id = selectedItem.getValue().getId();
-                    ClientDAO.getInstance().deleteRecord(id);
+                    int id = selectedRecordItem.getValue().getId();
+                clientRecords.deleteRecord(id);
                     
-                    selectedItem.getParent().getChildren().remove(selectedItem);
+                    selectedRecordItem.getParent().getChildren().remove(selectedRecordItem);
                       
 //                             (e -> {
 //                    
@@ -295,39 +312,90 @@ public class PrimaryController implements Initializable {
                 }
             }
         });
+        
+         delRequestAction.setOnAction(event -> {
+            Dialog<ButtonType> dialog = new Dialog();
+            DialogPane dialogPane = dialog.getDialogPane();
+            dialog.setTitle("Удаление элемента");
+            dialog.setHeaderText("Вы действительно хотите удалить из списка элемент: " + selectionModelRequest.getSelectedItems().iterator().next().getValue() + "?");
+            dialog.getDialogPane().getButtonTypes().addAll(
+                    new ButtonType("Удалить", ButtonBar.ButtonData.YES),
+                    new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE));
+
+            Optional<ButtonType> result = dialog.showAndWait();  
+            
+            
+            if (result.isPresent()) {
+                if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.YES) {
+                    int id = selectedRequestItem.getValue().getId();
+                clientRequests.deleteRequest(id);
+                    
+                      
+//                             (e -> {
+//                    
+//                        if(e.getValue().getId() == id) {
+//                            selectedItem.getParent().getChildren().remove(e);
+//                            tree.refresh();
+//                        } 
+//                    });
+                    treeRequest.refresh();
+//                forEach(e -> {
+//                        if(e.getValue().getId() == id) {
+//                            selectedItem.getParent().getChildren().remove(e);
+//                            tree.refresh();
+//                        } 
+//                    
+//                    });
+                  
+                } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
+                    System.out.println("Нажата кнопка отмена");
+                }
+            }
+        });
 
     }
     
     @FXML
     void actionImport(ActionEvent event) throws IOException {
+        ClientDAO clientRecords = new ClientDAO();
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Предупреждение");
+        alert.setHeaderText("При импорте файла произойдёт очистка базы данных!");
+        alert.setContentText("Вы уверены что хотите выполнить импорт файла?");
+        Optional<ButtonType> result = alert.showAndWait();
+        if(result.get() == ButtonType.OK) {
+            clientRecords.eraseSpr();
+            Stage stage = new Stage();
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Выберите файл для импорта");
+            fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "/desktop"));
+            fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("csv", "*.csv"));
+            File selectedFile = fileChooser.showOpenDialog(stage);
+            List<String> content = Content.getContent(selectedFile);
+            String[][] prepareContent = Content.recordListTransform(content);
+            clientRecords.importRecords(prepareContent);
+        } 
         
-        Stage stage = new Stage();
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Выберите файл для импорта");
-        fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "/desktop"));
-        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("csv", "*.csv"));
-        File selectedFile = fileChooser.showOpenDialog(stage);
-        List<String> content = Content.getContent(selectedFile);
-        String[][] prepareContent = Content.listToTwoArray(content);
-        ClientDAO.getInstance().importRecords(prepareContent);
+        
         
         
     }
 
     @FXML
     public void submit() {
+        ClientDAO clientRecords = new ClientDAO();
         String subject = subjectID.getText();
         String opfr = opfrID.getText();
         String upfr = upfrID.getText();
 
-        ClientDAO.getInstance().editRecord(recordID, subject, opfr, upfr);
+        clientRecords.editRecord(recordID, subject, opfr, upfr);
         tree.refresh();
-        updateTreeViewItem();
+        updateTreeViewRecordItem();
 
         System.out.println("Submit");
     }
     
-        @FXML
+    @FXML
     void actionAbout(ActionEvent event) {
          Dialog<ButtonType> dialog = new Dialog();
             DialogPane dialogPane = dialog.getDialogPane();
@@ -351,14 +419,32 @@ public class PrimaryController implements Initializable {
     }
     
  
+    @FXML
+    void actionSubmitRequest(ActionEvent event) {
+        ClientDAO clientRequest = new ClientDAO();
+        String name = requestValue.getText();
+        String shortName = requestShortValue.getText();
+        clientRequest.editRequest(requestID, name, shortName);
+        treeRequest.refresh();
+        updateTreeViewRequestItem();
+        
+    }
+    
 
-    private void updateTreeViewItem() {
+    private void updateTreeViewRecordItem() {
         TreeItem selectedItem = tree.getSelectionModel().getSelectedItem();
         Record selectedClient = (Record) selectedItem.getValue();
         selectedClient.setSubject(subjectID.getText());
         selectedClient.setOpfr(opfrID.getText());
         selectedClient.setUpfr(upfrID.getText());
 
+    }
+    
+    private void updateTreeViewRequestItem() {
+        TreeItem selectedItem = treeRequest.getSelectionModel().getSelectedItem();
+        Request selectedClient = (Request) selectedItem.getValue();
+        selectedClient.setName(requestValue.getText());
+        selectedClient.setShortName(requestShortValue.getText());
     }
 
 }
