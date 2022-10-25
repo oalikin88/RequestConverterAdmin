@@ -352,6 +352,58 @@ public class PrimaryController implements Initializable {
                 }
             }
         });
+         
+         addRequestAction.setOnAction(event -> {
+            Dialog<ButtonType> dialog = new Dialog();
+            DialogPane dialogPane = dialog.getDialogPane();
+            dialog.setTitle("Добавление нового запроса");
+            dialog.setHeaderText("Добавление нового запроса");
+            
+            VBox vbox = new VBox();
+           
+            dialogPane.setContent(vbox);
+
+            Label labelName = new Label("Полное название запроса");
+            TextField fieldName = new TextField();
+            Label labelShortName = new Label("Сокращённое название запроса");
+            TextField fieldShortName = new TextField();
+            
+            StackPane stackPane1 = new StackPane();
+            StackPane stackPane2 = new StackPane();
+            StackPane stackPane3 = new StackPane();
+            StackPane stackPane4 = new StackPane();
+
+            stackPane1.getChildren().add(labelName);
+            stackPane2.getChildren().add(fieldName);
+            stackPane3.getChildren().add(labelShortName);
+            stackPane4.getChildren().add(fieldShortName);
+
+
+            vbox.getChildren().addAll(stackPane1, stackPane2, stackPane3, stackPane4);
+
+            dialog.getDialogPane().getButtonTypes().addAll(
+                    new ButtonType("Добавить", ButtonBar.ButtonData.OK_DONE),
+                    new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE));
+
+            Optional<ButtonType> result = dialog.showAndWait();
+
+            if (result.isPresent()) {
+                if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
+
+                    String name = fieldName.getText();
+                    String shortName = fieldShortName.getText();
+                    
+                    clientRequests.addRequest(name, shortName);
+                    Request recuest = new Request(name, shortName);
+                    TreeItem<Request> newRequestItem = new TreeItem<>(recuest);
+                    selectedRequestItem.getParent().getChildren().add(newRequestItem);
+                    treeRequest.refresh();
+                    System.out.println(dialog.resultProperty());
+                }
+            } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
+                System.out.println("Нажата кнопка отмена");
+            }
+         });
 
     }
     
@@ -414,8 +466,7 @@ public class PrimaryController implements Initializable {
             vBox.getChildren().addAll(author, info);
             dialogPane.setContent(textFlow);
             dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
-
-            Optional<ButtonType> result = dialog.showAndWait();  
+            Optional<ButtonType> result = dialog.showAndWait();
     }
     
  
