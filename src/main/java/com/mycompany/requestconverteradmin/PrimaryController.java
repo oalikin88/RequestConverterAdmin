@@ -8,9 +8,14 @@ import com.mycompany.requestconverteradmin.data.TreeViewManipulations;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -38,6 +43,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class PrimaryController implements Initializable {
@@ -53,7 +59,7 @@ public class PrimaryController implements Initializable {
 
     @FXML
     private MenuItem about;
-    
+
     @FXML
     private ProgressIndicator statusIndicator;
 
@@ -83,12 +89,15 @@ public class PrimaryController implements Initializable {
 
     @FXML
     private MenuItem delElement;
-    
+
     @FXML
     private MenuItem addRequestAction;
-    
+
     @FXML
     private MenuItem delRequestAction;
+
+    @FXML
+    private MenuItem exit;
 
     @FXML
     private TextField addNameElementId;
@@ -101,12 +110,12 @@ public class PrimaryController implements Initializable {
 
     @FXML
     private TextField addUpfrId;
-    
+
     @FXML
     private GridPane requestGrid;
     @FXML
     private TextField requestValue;
-    
+
     @FXML
     private TreeView<Request> treeRequest;
     @FXML
@@ -118,21 +127,22 @@ public class PrimaryController implements Initializable {
     private TreeItem<Request> selectedRequestItem;
     private List<Request> requests;
     private int requestID;
+    private TreeItem<Record> root;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        
+
         ClientDAO clientRecords = new ClientDAO();
         ClientDAO clientRequests = new ClientDAO();
         records = clientRecords.findAllRecords();
         requests = clientRequests.findAllRequests();
 
         // Формируем список регионов и заполняем таблицу данными
-        TreeItem<Record> root = TreeViewManipulations.updateTreeViewRecordList(records);
+        root = TreeViewManipulations.updateTreeViewRecordList(records);
         TreeItem<Request> parent = TreeViewManipulations.updateTreeViewRequestList(requests);
         tree.setRoot(root);
         treeRequest.setRoot(parent);
-        
+
         MultipleSelectionModel<TreeItem<Record>> selectionModel = tree.getSelectionModel();
         MultipleSelectionModel<TreeItem<Request>> selectionModelRequest = treeRequest.getSelectionModel();
 
@@ -153,8 +163,8 @@ public class PrimaryController implements Initializable {
             }
 
         });
-        
-           treeRequest.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
+
+        treeRequest.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
 
             @Override
             public void changed(ObservableValue observable, Object oldValue,
@@ -165,41 +175,10 @@ public class PrimaryController implements Initializable {
                 requestID = selectedRequestItem.getValue().getId();
                 requestShortValue.setText(selectedRequestItem.getValue().getShortName());
                 requestValue.setText(selectedRequestItem.getValue().getName());
-               
 
                 System.out.println("Selected Text : " + selectedRequestItem.getValue().getName());
             }
 
-        });
-        
-
-        tree.setOnMouseMoved(event -> {
-//            Annotation[] annotations = event.getPickResult().getIntersectedNode().accessibleTextProperty().getBean().getClass().getAnnotations();
-//           for(Annotation a : annotations) {
-//               System.out.println(a.annotationType());
-//               for(Method m : a.annotationType().getMethods()) {
-//                   Annotation[][] parameterAnnotations = m.getParameterAnnotations();
-//                   for(int i = 0; i < parameterAnnotations.length; i++) {
-//                       for(int j = 0; j < i; j++) {
-//                           System.out.println(parameterAnnotations[i][j]);
-//                       }
-//                   }
-//                       System.out.println(m.getParameterAnnotations());
-//                   
-//                   
-//               }
-//           }
-
-//             System.out.println("********************************");
-//
-//            Node intersectedNode = event.getPickResult().getIntersectedNode();
-//           String s =  intersectedNode.toString();
-//             System.out.println(s);
-//             System.out.println(event.getPickResult().getIntersectedNode().getStyleClass());
-//             
-//             System.out.println("--------------");
-//        
-//          System.out.println("*****");
         });
 
         // При нажатии на кнопку добавить создаём диалоговое окно с формой для ввода нового элемента
@@ -259,7 +238,7 @@ public class PrimaryController implements Initializable {
                     String opfr = code2.getText();
                     String upfr = code3.getText();
                     String nameRegion = name.getText();
-                   clientRecords.addRecord(subject, opfr, upfr, nameRegion);
+                    clientRecords.addRecord(subject, opfr, upfr, nameRegion);
                     Record rec = new Record(subject, opfr, upfr, nameRegion);
                     TreeItem<Record> newRecordItem = new TreeItem<>(rec);
                     selectedRecordItem.getChildren().add(newRecordItem);
@@ -281,39 +260,20 @@ public class PrimaryController implements Initializable {
                     new ButtonType("Удалить", ButtonBar.ButtonData.YES),
                     new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE));
 
-            Optional<ButtonType> result = dialog.showAndWait();  
-            
-            
+            Optional<ButtonType> result = dialog.showAndWait();
             if (result.isPresent()) {
                 if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.YES) {
                     int id = selectedRecordItem.getValue().getId();
-                clientRecords.deleteRecord(id);
-                    
+                    clientRecords.deleteRecord(id);
                     selectedRecordItem.getParent().getChildren().remove(selectedRecordItem);
-                      
-//                             (e -> {
-//                    
-//                        if(e.getValue().getId() == id) {
-//                            selectedItem.getParent().getChildren().remove(e);
-//                            tree.refresh();
-//                        } 
-//                    });
                     tree.refresh();
-//                forEach(e -> {
-//                        if(e.getValue().getId() == id) {
-//                            selectedItem.getParent().getChildren().remove(e);
-//                            tree.refresh();
-//                        } 
-//                    
-//                    });
-                  
                 } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
                     System.out.println("Нажата кнопка отмена");
                 }
             }
         });
-        
-         delRequestAction.setOnAction(event -> {
+
+        delRequestAction.setOnAction(event -> {
             Dialog<ButtonType> dialog = new Dialog();
             DialogPane dialogPane = dialog.getDialogPane();
             dialog.setTitle("Удаление элемента");
@@ -321,70 +281,42 @@ public class PrimaryController implements Initializable {
             dialog.getDialogPane().getButtonTypes().addAll(
                     new ButtonType("Удалить", ButtonBar.ButtonData.YES),
                     new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE));
-
-            Optional<ButtonType> result = dialog.showAndWait();  
-            
-            
+            Optional<ButtonType> result = dialog.showAndWait();
             if (result.isPresent()) {
                 if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.YES) {
                     int id = selectedRequestItem.getValue().getId();
-                clientRequests.deleteRequest(id);
-                       selectedRequestItem.getParent().getChildren().remove(selectedRequestItem);
-                      
-//                             (e -> {
-//                    
-//                        if(e.getValue().getId() == id) {
-//                            selectedItem.getParent().getChildren().remove(e);
-//                            tree.refresh();
-//                        } 
-//                    });
+                    clientRequests.deleteRequest(id);
+                    selectedRequestItem.getParent().getChildren().remove(selectedRequestItem);
                     treeRequest.refresh();
-//                forEach(e -> {
-//                        if(e.getValue().getId() == id) {
-//                            selectedItem.getParent().getChildren().remove(e);
-//                            tree.refresh();
-//                        } 
-//                    
-//                    });
-                  
                 } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
                     System.out.println("Нажата кнопка отмена");
                 }
             }
         });
-         
-         addRequestAction.setOnAction(event -> {
+
+        addRequestAction.setOnAction(event -> {
             Dialog<ButtonType> dialog = new Dialog();
             DialogPane dialogPane = dialog.getDialogPane();
             dialog.setTitle("Добавление нового запроса");
             dialog.setHeaderText("Добавление нового запроса");
-            
             VBox vbox = new VBox();
-           
             dialogPane.setContent(vbox);
-
             Label labelName = new Label("Полное название запроса");
             TextField fieldName = new TextField();
             Label labelShortName = new Label("Сокращённое название запроса");
             TextField fieldShortName = new TextField();
-            
             StackPane stackPane1 = new StackPane();
             StackPane stackPane2 = new StackPane();
             StackPane stackPane3 = new StackPane();
             StackPane stackPane4 = new StackPane();
-
             stackPane1.getChildren().add(labelName);
             stackPane2.getChildren().add(fieldName);
             stackPane3.getChildren().add(labelShortName);
             stackPane4.getChildren().add(fieldShortName);
-
-
             vbox.getChildren().addAll(stackPane1, stackPane2, stackPane3, stackPane4);
-
             dialog.getDialogPane().getButtonTypes().addAll(
                     new ButtonType("Добавить", ButtonBar.ButtonData.OK_DONE),
                     new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE));
-
             Optional<ButtonType> result = dialog.showAndWait();
 
             if (result.isPresent()) {
@@ -392,7 +324,7 @@ public class PrimaryController implements Initializable {
 
                     String name = fieldName.getText();
                     String shortName = fieldShortName.getText();
-                    
+
                     clientRequests.addRequest(name, shortName);
                     Request recuest = new Request(name, shortName);
                     TreeItem<Request> newRequestItem = new TreeItem<>(recuest);
@@ -403,10 +335,14 @@ public class PrimaryController implements Initializable {
             } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
                 System.out.println("Нажата кнопка отмена");
             }
-         });
+        });
+
+        exit.setOnAction(event -> {
+            Platform.exit();
+        });
 
     }
-    
+
     @FXML
     void actionImport(ActionEvent event) throws IOException {
         ClientDAO clientRecords = new ClientDAO();
@@ -415,7 +351,7 @@ public class PrimaryController implements Initializable {
         alert.setHeaderText("При импорте файла произойдёт очистка базы данных!");
         alert.setContentText("Вы уверены что хотите выполнить импорт файла?");
         Optional<ButtonType> result = alert.showAndWait();
-        if(result.get() == ButtonType.OK) {
+        if (result.get() == ButtonType.OK) {
             clientRecords.eraseSpr();
             Stage stage = new Stage();
             FileChooser fileChooser = new FileChooser();
@@ -426,11 +362,8 @@ public class PrimaryController implements Initializable {
             List<String> content = Content.getContent(selectedFile);
             String[][] prepareContent = Content.recordListTransform(content);
             clientRecords.importRecords(prepareContent);
-        } 
-        
-        
-        
-        
+        }
+
     }
 
     @FXML
@@ -446,30 +379,29 @@ public class PrimaryController implements Initializable {
 
         System.out.println("Submit");
     }
-    
+
     @FXML
     void actionAbout(ActionEvent event) {
-         Dialog<ButtonType> dialog = new Dialog();
-            DialogPane dialogPane = dialog.getDialogPane();
-            dialog.setWidth(300);
-            dialog.setHeight(300);
-            dialogPane.setMaxHeight(300);
-            dialogPane.setMaxWidth(300);
-            dialog.setTitle("О программе");
-            dialog.setHeaderText(null);
-            TextFlow textFlow = new TextFlow();
-            VBox vBox = new VBox();
-            Text author = new Text("by Oleg Alikin");
-            Text info = new Text("Отдел эксплуатации и сопровождения информационных подсистем Отделения ПФР по Белгородской области.");
-            info.setWrappingWidth(250);
-            textFlow.getChildren().add(vBox);
-            vBox.getChildren().addAll(author, info);
-            dialogPane.setContent(textFlow);
-            dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
-            Optional<ButtonType> result = dialog.showAndWait();
+        Dialog<ButtonType> dialog = new Dialog();
+        DialogPane dialogPane = dialog.getDialogPane();
+        dialog.setWidth(300);
+        dialog.setHeight(300);
+        dialogPane.setMaxHeight(300);
+        dialogPane.setMaxWidth(300);
+        dialog.setTitle("О программе");
+        dialog.setHeaderText(null);
+        TextFlow textFlow = new TextFlow();
+        VBox vBox = new VBox();
+        Text author = new Text("by Oleg Alikin");
+        Text info = new Text("Отдел эксплуатации и сопровождения информационных подсистем Отделения ПФР по Белгородской области.");
+        info.setWrappingWidth(250);
+        textFlow.getChildren().add(vBox);
+        vBox.getChildren().addAll(author, info);
+        dialogPane.setContent(textFlow);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
+        Optional<ButtonType> result = dialog.showAndWait();
     }
-    
- 
+
     @FXML
     void actionSubmitRequest(ActionEvent event) {
         ClientDAO clientRequest = new ClientDAO();
@@ -478,9 +410,8 @@ public class PrimaryController implements Initializable {
         clientRequest.editRequest(requestID, name, shortName);
         treeRequest.refresh();
         updateTreeViewRequestItem();
-        
+
     }
-    
 
     private void updateTreeViewRecordItem() {
         TreeItem selectedItem = tree.getSelectionModel().getSelectedItem();
@@ -490,12 +421,91 @@ public class PrimaryController implements Initializable {
         selectedClient.setUpfr(upfrID.getText());
 
     }
-    
+
     private void updateTreeViewRequestItem() {
         TreeItem selectedItem = treeRequest.getSelectionModel().getSelectedItem();
         Request selectedClient = (Request) selectedItem.getValue();
         selectedClient.setName(requestValue.getText());
         selectedClient.setShortName(requestShortValue.getText());
+    }
+
+    @FXML
+    void actionSearch(ActionEvent event) {
+
+        Dialog<ButtonType> dialog = new Dialog();
+        DialogPane dialogPane = dialog.getDialogPane();
+        dialog.setTitle("Поиск");
+        dialog.setHeaderText("Поиск элемента");
+        dialog.initModality(Modality.NONE);
+        GridPane gridPane = new GridPane();
+        dialogPane.setContent(gridPane);
+
+        Label searchRequestLabel = new Label("Найти");
+        TextField searchRequestField = new TextField();
+        gridPane.add(searchRequestLabel, 0, 0);
+        gridPane.add(searchRequestField, 1, 0);
+        GridPane.setMargin(searchRequestLabel, new Insets(0, 15, 0, 0));
+        dialog.getDialogPane().getButtonTypes().addAll(
+                new ButtonType("Найти", ButtonBar.ButtonData.OK_DONE),
+                new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE));
+
+        Optional<ButtonType> result = dialog.showAndWait();
+        TreeItem<Record> rootSearch = new TreeItem<>(new Record("Запросы"));
+        TreeItem<Record> parentSearch = new TreeItem<>();
+        List<Record> childList = new ArrayList<>();
+        List<Record> parentList = new ArrayList<>();
+        
+        
+        if (result.isPresent()) {
+            if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
+
+                String target = searchRequestField.getText().trim().toLowerCase();
+                int parentCount;
+                int childCount;
+                System.out.println("(|)(|)(|)(|)(|)(|)(|)(|)");
+                for(int i = 0; i < root.getChildren().size(); i++) {
+                    parentList.add(root.getChildren().get(i).getValue());
+                    System.out.println(root.getChildren().get(i).getValue().getName());
+                }
+                System.out.println("(|)(|)(|)(|)(|)(|)(|)(|)");
+                for ( parentCount = 0; parentCount < root.getChildren().size(); parentCount++) {
+                    for ( childCount = 0; childCount < root.getChildren().get(parentCount).getChildren().size(); childCount++) {
+                        if (root.getChildren().get(parentCount).getChildren().get(childCount).getValue().getName().toLowerCase().contains(target)) {
+                     //       System.out.println(root.getChildren().get(parentCount).getChildren().get(childCount).getParent().getValue().getName());
+                            childList.add(root.getChildren().get(parentCount).getChildren().get(childCount).getValue());
+                            System.out.println(root.getChildren().get(parentCount).getChildren().get(childCount).getValue());
+                            
+                     //       searchItemsChilds.getChildren().add(root.getChildren().get(parentCount).getChildren().get(childCount));
+                            
+                        }
+                    }   
+                }
+                for(int out = 0; out < parentList.size(); out++) {
+                    parentSearch = new TreeItem<>(parentList.get(out));
+                    rootSearch.getChildren().add(parentSearch);
+                    for(int inner = 0; inner < childList.size(); inner++) {
+                if (childList.get(inner).getSubject().equals(parentList.get(out).getSubject())
+                        && (!childList.get(inner).getOpfr().equals(parentList.get(out).getOpfr())
+                        || !childList.get(inner).getUpfr().equals(parentList.get(out).getUpfr()))) {
+                    parentSearch.getChildren().add(new TreeItem<>(childList.get(inner)));
+                }
+            }
+                        
+                    
+                }
+                
+                
+                rootSearch.getChildren().setAll(rootSearch.getChildren().filtered(e -> !e.getChildren().isEmpty()).stream().collect(Collectors.toList()));
+                rootSearch.setExpanded(true);
+                rootSearch.getChildren().iterator().forEachRemaining(e -> e.setExpanded(true));
+                tree.setRoot(rootSearch);
+                tree.refresh();
+                System.out.println(dialog.resultProperty() + ", " + target);
+            }
+        } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
+            System.out.println("Нажата кнопка отмена");
+        }
+
     }
 
 }

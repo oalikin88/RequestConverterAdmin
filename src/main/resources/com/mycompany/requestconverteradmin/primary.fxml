@@ -25,7 +25,8 @@
           <Menu mnemonicParsing="false" text="Меню">
             <items>
                   <MenuItem fx:id="importFile" mnemonicParsing="false" onAction="#actionImport" text="Импортировать файл" />
-              <MenuItem mnemonicParsing="false" text="Close" />
+                  <MenuItem mnemonicParsing="false" onAction="#actionSearch" text="Поиск" />
+              <MenuItem fx:id="exit" mnemonicParsing="false" text="Закрыть" />
             </items>
           </Menu>
           <Menu mnemonicParsing="false" text="Справка">
