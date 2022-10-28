@@ -19,7 +19,7 @@ public class App extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         
-        scene = new Scene(loadFXML("primary"), 640, 480);
+        scene = new Scene(loadFXML("primary"), 900, 600);
         stage.setScene(scene);
         stage.setTitle("Конвертер запросов Админ");
         stage.getIcons().add(new Image("icons/icon.png"));
