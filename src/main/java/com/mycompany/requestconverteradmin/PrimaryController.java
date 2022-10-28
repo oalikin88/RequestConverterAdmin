@@ -120,6 +120,9 @@ public class PrimaryController implements Initializable {
     private TreeView<Request> treeRequest;
     @FXML
     private TextField requestShortValue;
+    
+    @FXML
+    private TextField inputSearchLine;
 
     private int recordID;
     private List<Record> records;
@@ -340,6 +343,53 @@ public class PrimaryController implements Initializable {
         exit.setOnAction(event -> {
             Platform.exit();
         });
+        
+        inputSearchLine.setOnKeyTyped(event -> {
+            
+              if (!inputSearchLine.getText().isEmpty() && !inputSearchLine.getText().isBlank()) {
+           TreeItem<Record> rootSearch = new TreeItem<>(new Record("Регионы"));
+           TreeItem<Record> parentSearch = new TreeItem<>();
+           List<Record> childList = new ArrayList<>();
+           List<Record> parentList = new ArrayList<>();
+        
+                String target = inputSearchLine.getText().trim().toLowerCase();
+                int parentCount;
+                int childCount;
+                for(int i = 0; i < root.getChildren().size(); i++) {
+                    parentList.add(root.getChildren().get(i).getValue());
+                    System.out.println(root.getChildren().get(i).getValue().getName());
+                }
+                for ( parentCount = 0; parentCount < root.getChildren().size(); parentCount++) {
+                    for ( childCount = 0; childCount < root.getChildren().get(parentCount).getChildren().size(); childCount++) {
+                        if (root.getChildren().get(parentCount).getChildren().get(childCount).getValue().getName().toLowerCase().contains(target)) {
+                            childList.add(root.getChildren().get(parentCount).getChildren().get(childCount).getValue());
+                            System.out.println(root.getChildren().get(parentCount).getChildren().get(childCount).getValue());                         
+                        }
+                    }   
+                }
+                for(int out = 0; out < parentList.size(); out++) {
+                    parentSearch = new TreeItem<>(parentList.get(out));
+                    rootSearch.getChildren().add(parentSearch);
+                    for(int inner = 0; inner < childList.size(); inner++) {
+                if (childList.get(inner).getSubject().equals(parentList.get(out).getSubject())
+                        && (!childList.get(inner).getOpfr().equals(parentList.get(out).getOpfr())
+                        || !childList.get(inner).getUpfr().equals(parentList.get(out).getUpfr()))) {
+                    parentSearch.getChildren().add(new TreeItem<>(childList.get(inner)));
+                }
+            }
+                 
+                }
+
+                rootSearch.getChildren().setAll(rootSearch.getChildren().filtered(e -> !e.getChildren().isEmpty()).stream().collect(Collectors.toList()));
+                rootSearch.setExpanded(true);
+                rootSearch.getChildren().iterator().forEachRemaining(e -> e.setExpanded(true));
+                tree.setRoot(rootSearch);
+                tree.refresh();
+            }
+            
+            
+        });
+        
 
     }
 
@@ -458,25 +508,18 @@ public class PrimaryController implements Initializable {
         
         if (result.isPresent()) {
             if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
-
                 String target = searchRequestField.getText().trim().toLowerCase();
                 int parentCount;
                 int childCount;
-                System.out.println("(|)(|)(|)(|)(|)(|)(|)(|)");
                 for(int i = 0; i < root.getChildren().size(); i++) {
                     parentList.add(root.getChildren().get(i).getValue());
                     System.out.println(root.getChildren().get(i).getValue().getName());
                 }
-                System.out.println("(|)(|)(|)(|)(|)(|)(|)(|)");
                 for ( parentCount = 0; parentCount < root.getChildren().size(); parentCount++) {
                     for ( childCount = 0; childCount < root.getChildren().get(parentCount).getChildren().size(); childCount++) {
                         if (root.getChildren().get(parentCount).getChildren().get(childCount).getValue().getName().toLowerCase().contains(target)) {
-                     //       System.out.println(root.getChildren().get(parentCount).getChildren().get(childCount).getParent().getValue().getName());
                             childList.add(root.getChildren().get(parentCount).getChildren().get(childCount).getValue());
-                            System.out.println(root.getChildren().get(parentCount).getChildren().get(childCount).getValue());
-                            
-                     //       searchItemsChilds.getChildren().add(root.getChildren().get(parentCount).getChildren().get(childCount));
-                            
+                            System.out.println(root.getChildren().get(parentCount).getChildren().get(childCount).getValue());                         
                         }
                     }   
                 }
@@ -490,11 +533,9 @@ public class PrimaryController implements Initializable {
                     parentSearch.getChildren().add(new TreeItem<>(childList.get(inner)));
                 }
             }
-                        
-                    
+                 
                 }
-                
-                
+
                 rootSearch.getChildren().setAll(rootSearch.getChildren().filtered(e -> !e.getChildren().isEmpty()).stream().collect(Collectors.toList()));
                 rootSearch.setExpanded(true);
                 rootSearch.getChildren().iterator().forEachRemaining(e -> e.setExpanded(true));
