@@ -7,7 +7,6 @@
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
@@ -25,7 +24,7 @@
 
 <BorderPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="600.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.requestconverteradmin.PrimaryController">
    <center>
-      <AnchorPane BorderPane.alignment="CENTER">
+      <AnchorPane fx:id="anchorPane" BorderPane.alignment="CENTER">
          <children>
             <TabPane prefHeight="542.0" prefWidth="900.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
               <tabs>
@@ -262,12 +261,13 @@
             <items>
                   <MenuItem fx:id="importFile" mnemonicParsing="false" onAction="#actionImport" text="Импортировать файл" />
                   <MenuItem mnemonicParsing="false" onAction="#actionSearch" text="Поиск" />
+                  <MenuItem mnemonicParsing="false" onAction="#properties" text="Настройки" />
               <MenuItem fx:id="exit" mnemonicParsing="false" text="Закрыть" />
             </items>
           </Menu>
           <Menu mnemonicParsing="false" text="Справка">
             <items>
-                  <MenuItem fx:id="instruction" mnemonicParsing="false" text="Инструкция" />
+                  <MenuItem fx:id="instruction" mnemonicParsing="false" onAction="#actionInstruction" text="Инструкция" />
               <MenuItem fx:id="about" mnemonicParsing="false" onAction="#actionAbout" text="О программе" />
             </items>
           </Menu>
@@ -277,26 +277,22 @@
    <bottom>
       <BorderPane prefHeight="33.0" prefWidth="900.0" BorderPane.alignment="CENTER">
          <left>
-            <Label prefHeight="26.0" prefWidth="252.0" text="Статус:" BorderPane.alignment="CENTER">
-               <BorderPane.margin>
-                  <Insets left="15.0" />
-               </BorderPane.margin>
-            </Label>
+            <VBox prefHeight="33.0" prefWidth="359.0" BorderPane.alignment="CENTER">
+               <children>
+                  <Label prefHeight="34.0" prefWidth="354.0" text="Статус:">
+                     <VBox.margin>
+                        <Insets left="5.0" />
+                     </VBox.margin>
+                  </Label>
+               </children>
+            </VBox>
          </left>
-         <right>
-            <ProgressIndicator prefHeight="0.0" prefWidth="20.0" BorderPane.alignment="CENTER">
-               <BorderPane.margin>
-                  <Insets right="15.0" />
-               </BorderPane.margin>
-            </ProgressIndicator>
-         </right>
          <center>
-            <Label maxWidth="1.7976931348623157E308" prefHeight="17.0" prefWidth="313.0" text="label" BorderPane.alignment="CENTER_LEFT">
-               <BorderPane.margin>
-                  <Insets left="5.0" right="5.0" />
-               </BorderPane.margin>
-            </Label>
-         </center>
-      </BorderPane>
+            <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+               <children>
+                  <Label fx:id="statusBarInfo" prefHeight="34.0" prefWidth="642.0" />
+               </children>
+            </VBox>
+         </center></BorderPane>
    </bottom>
 </BorderPane>

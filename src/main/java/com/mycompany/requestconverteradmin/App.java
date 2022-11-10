@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import javafx.event.EventType;
 import javafx.scene.image.Image;
 
 /**
@@ -24,6 +25,7 @@ public class App extends Application {
         stage.setTitle("Конвертер запросов Админ");
         stage.getIcons().add(new Image("icons/icon.png"));
         stage.show();
+        
     }
 
      void setRoot(String fxml) throws IOException {

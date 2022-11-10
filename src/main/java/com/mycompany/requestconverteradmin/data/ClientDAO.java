@@ -6,6 +6,7 @@ package com.mycompany.requestconverteradmin.data;
 
 import com.mycompany.requestconverteradmin.connection.DBConnection;
 import com.mycompany.requestconverteradmin.exceptions.DaoException;
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ public class ClientDAO {
     private static final String DELETE_REQUEST = "DELETE FROM request WHERE id = ?";
 
     
-      public void addRequest(String name, String shortName) {
+      public void addRequest(String name, String shortName) throws IOException {
         try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(ADD_REQUEST)) {
 
             preparedStatement.setString(1, name);
@@ -42,7 +43,7 @@ public class ClientDAO {
 
     }
       
-       public void editRequest(int id, String name, String shortName) {
+       public void editRequest(int id, String name, String shortName) throws IOException {
         try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(UPDATE_REQUEST)) {
             preparedStatement.setString(1, name);
             preparedStatement.setString(2, shortName);
@@ -56,7 +57,7 @@ public class ClientDAO {
     }
        
        
-          public void deleteRequest(int id) {
+          public void deleteRequest(int id) throws IOException {
         try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(DELETE_REQUEST)) {
             preparedStatement.setInt(1, id);
             preparedStatement.executeUpdate();
@@ -67,7 +68,7 @@ public class ClientDAO {
     }
     
 
-    public List<Record> findAllRecords() {
+    public List<Record> findAllRecords() throws IOException {
         try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(FIND_ALL_SPR)) {
             var resultSet = preparedStatement.executeQuery();
             List<Record> records = new ArrayList<>();
@@ -81,7 +82,7 @@ public class ClientDAO {
         }
     }
     
-      public List<Request> findAllRequests() {
+      public List<Request> findAllRequests() throws IOException {
         try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(FIND_ALL_REQUEST)) {
             var resultSet = preparedStatement.executeQuery();
             List<Request> requests = new ArrayList<>();
@@ -114,7 +115,7 @@ public class ClientDAO {
         return request;       
     }
 
-    public void editRecord(int id, String subject, String opfr, String upfr) {
+    public void editRecord(int id, String subject, String opfr, String upfr) throws IOException {
         try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(UPDATE_RECORD)) {
             preparedStatement.setString(1, subject);
             preparedStatement.setString(2, opfr);
@@ -128,7 +129,7 @@ public class ClientDAO {
         }
     }
 
-    public void addRecord(String subject, String opfr, String upfr, String name) {
+    public void addRecord(String subject, String opfr, String upfr, String name) throws IOException {
         try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(ADD_RECORD)) {
 
             preparedStatement.setString(1, subject);
@@ -144,7 +145,7 @@ public class ClientDAO {
 
     }
 
-    public void deleteRecord(int id) {
+    public void deleteRecord(int id) throws IOException {
         try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(DELETE_RECORD)) {
             preparedStatement.setInt(1, id);
             preparedStatement.executeUpdate();
@@ -154,7 +155,7 @@ public class ClientDAO {
         }
     }
 
-    public void importRecords(String[][] input) {
+    public void importRecords(String[][] input) throws IOException {
         for (int i = 0; i < input.length; i++) {
 
             String[] buf = new String[4];
@@ -179,7 +180,7 @@ public class ClientDAO {
         System.out.println("Импортирование завершено");
     }
 
-    public void eraseSpr() {
+    public void eraseSpr() throws IOException {
         try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(ERASE_SPR)) {
             preparedStatement.executeUpdate();
         } catch (SQLException throwable) {

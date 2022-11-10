@@ -1,0 +1,45 @@
+body, html {
+    height: 100%;
+    overflow: auto;
+}
+p {
+    margin-bottom: 1rem;
+}
+
+h1 {
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+    
+    
+}
+
+h2 {
+    margin-top: 5rem;
+}
+.content img {
+    margin-bottom: 3rem;
+    
+}
+
+#logo{
+  height: 48px;
+  margin-right: 16px;
+  margin-left: 16px;
+  transition: height .2s ease-in;
+}
+
+footer {
+     background-color: #292929;
+    
+}
+
+nav span {
+font-size: 19px;
+font-weight: 600;
+line-height: 106.34%;
+white-space: nowrap;
+letter-spacing: normal;
+font-family: "Open Sans",sans-serif;
+transition: font-size .2s ease-in;
+    
+}
