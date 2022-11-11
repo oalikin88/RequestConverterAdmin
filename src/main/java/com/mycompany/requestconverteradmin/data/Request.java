@@ -4,6 +4,9 @@
  */
 package com.mycompany.requestconverteradmin.data;
 
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+
 /**
  *
  * @author 041AlikinOS
@@ -12,6 +15,13 @@ public class Request {
     private int id;
     private String name;
     private String shortName;
+    
+    private IntegerProperty nameSizeProperty = new SimpleIntegerProperty();
+    
+    public final Integer getNameSizeProperty() {
+        return name.length();
+    }
+    
 
     public Request() {
     }

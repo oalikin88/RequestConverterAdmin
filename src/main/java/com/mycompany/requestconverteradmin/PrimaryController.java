@@ -18,6 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
@@ -136,6 +137,9 @@ public class PrimaryController implements Initializable {
 
     @FXML
     private Button refreshButton;
+    
+    @FXML
+    private Button submitRequest;
 
     @FXML
     private Label statusBarInfo;
@@ -189,7 +193,6 @@ public class PrimaryController implements Initializable {
                             opfrID.setText(selectedRecordItem.getValue().getOpfr());
                             upfrID.setText(selectedRecordItem.getValue().getUpfr());
 
-                            System.out.println("Selected Text : " + selectedRecordItem.getValue().getName());
                         }
 
                     });
@@ -206,7 +209,6 @@ public class PrimaryController implements Initializable {
                             requestShortValue.setText(selectedRequestItem.getValue().getShortName());
                             requestValue.setText(selectedRequestItem.getValue().getName());
 
-                            System.out.println("Selected Text : " + selectedRequestItem.getValue().getName());
                         }
 
                     });
@@ -276,13 +278,11 @@ public class PrimaryController implements Initializable {
                                     TreeItem<Record> newRecordItem = new TreeItem<>(rec);
                                     selectedRecordItem.getChildren().add(newRecordItem);
                                     tree.refresh();
-                                    System.out.println(dialog.resultProperty());
                                 } catch (IOException ex) {
                                     Logger.getLogger(PrimaryController.class.getName()).log(Level.SEVERE, null, ex);
                                 }
                             }
                         } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
-                            System.out.println("Нажата кнопка отмена");
                         }
 
                     });
@@ -308,7 +308,6 @@ public class PrimaryController implements Initializable {
                                     Logger.getLogger(PrimaryController.class.getName()).log(Level.SEVERE, null, ex);
                                 }
                             } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
-                                System.out.println("Нажата кнопка отмена");
                             }
                         }
                     });
@@ -333,7 +332,6 @@ public class PrimaryController implements Initializable {
                                     Logger.getLogger(PrimaryController.class.getName()).log(Level.SEVERE, null, ex);
                                 }
                             } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
-                                System.out.println("Нажата кнопка отмена");
                             }
                         }
                     });
@@ -379,13 +377,11 @@ public class PrimaryController implements Initializable {
                                     TreeItem<Request> newRequestItem = new TreeItem<>(recuest);
                                     selectedRequestItem.getParent().getChildren().add(newRequestItem);
                                     treeRequest.refresh();
-                                    System.out.println(dialog.resultProperty());
                                 } catch (IOException ex) {
                                     Logger.getLogger(PrimaryController.class.getName()).log(Level.SEVERE, null, ex);
                                 }
                             }
                         } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
-                            System.out.println("Нажата кнопка отмена");
                         }
                     });
 
@@ -406,13 +402,11 @@ public class PrimaryController implements Initializable {
                             int childCount;
                             for (int i = 0; i < root.getChildren().size(); i++) {
                                 parentList.add(root.getChildren().get(i).getValue());
-                                System.out.println(root.getChildren().get(i).getValue().getName());
                             }
                             for (parentCount = 0; parentCount < root.getChildren().size(); parentCount++) {
                                 for (childCount = 0; childCount < root.getChildren().get(parentCount).getChildren().size(); childCount++) {
                                     if (root.getChildren().get(parentCount).getChildren().get(childCount).getValue().getName().toLowerCase().contains(target)) {
                                         childList.add(root.getChildren().get(parentCount).getChildren().get(childCount).getValue());
-                                        System.out.println(root.getChildren().get(parentCount).getChildren().get(childCount).getValue());
                                     }
                                 }
                             }
@@ -458,10 +452,87 @@ public class PrimaryController implements Initializable {
 
         };
 
-        Thread t = new Thread(connect);
-        t.setDaemon(true);
-        t.start();
-
+        Platform.runLater(connect);
+        
+        requestShortValue.disableProperty().set(true);
+        requestValue.disableProperty().set(true);
+        subjectID.disableProperty().set(true);
+        opfrID.disableProperty().set(true);
+        upfrID.disableProperty().set(true);
+        
+        
+        subjectID.textProperty().addListener((o) -> {
+           
+            if(selectedRecordItem.valueProperty() != null) {
+                if(selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Регионы")) {
+                    subjectID.disableProperty().set(true);
+                } else {
+                    subjectID.disableProperty().set(false);
+                }
+            }
+                  
+            
+        });
+        
+               opfrID.textProperty().addListener((o) -> {
+           
+            if(selectedRecordItem.valueProperty() != null) {
+                if(selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Регионы")) {
+                    opfrID.disableProperty().set(true);
+                } else {
+                    opfrID.disableProperty().set(false);
+                }
+            }
+                  
+            
+        });
+               
+                    upfrID.textProperty().addListener((o) -> {
+           
+            if(selectedRecordItem.valueProperty() != null) {
+                if(selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Регионы")) {
+                    upfrID.disableProperty().set(true);
+                } else {
+                    upfrID.disableProperty().set(false);
+                }
+            }
+                  
+            
+        });
+        
+        
+         btn.disableProperty().bind(Bindings.notEqual(subjectID.lengthProperty(), 3)
+                 .or(Bindings.notEqual(opfrID.lengthProperty(), 3))
+                 .or(Bindings.notEqual(upfrID.lengthProperty(), 3)));
+         
+         submitRequest.disableProperty().bind(Bindings.isEmpty(requestValue.textProperty())
+         .or(Bindings.isEmpty(requestShortValue.textProperty())));
+         
+         
+       requestShortValue.textProperty().addListener((o) -> {
+           if(selectedRequestItem.valueProperty() != null) {
+              if(selectedRequestItem.getValue().getName().equalsIgnoreCase("Запросы")) {
+                  requestShortValue.disableProperty().set(true);
+              } else {
+                  
+           requestShortValue.disableProperty().set(false);
+           }
+           } 
+       });
+               
+       
+        requestValue.textProperty().addListener((o) -> {
+           if(selectedRequestItem.valueProperty() != null) {
+              if(selectedRequestItem.getValue().getName().equalsIgnoreCase("Запросы")) {
+                  requestValue.disableProperty().set(true);
+              } else {
+                  
+           requestValue.disableProperty().set(false);
+           }
+           } 
+       });
+       
+       
     }
 
     @FXML
@@ -499,7 +570,6 @@ public class PrimaryController implements Initializable {
             tree.refresh();
             updateTreeViewRecordItem();
             
-            System.out.println("Submit");
         } catch (IOException ex) {
             Logger.getLogger(PrimaryController.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -593,13 +663,11 @@ public class PrimaryController implements Initializable {
                 int childCount;
                 for (int i = 0; i < root.getChildren().size(); i++) {
                     parentList.add(root.getChildren().get(i).getValue());
-                    System.out.println(root.getChildren().get(i).getValue().getName());
                 }
                 for (parentCount = 0; parentCount < root.getChildren().size(); parentCount++) {
                     for (childCount = 0; childCount < root.getChildren().get(parentCount).getChildren().size(); childCount++) {
                         if (root.getChildren().get(parentCount).getChildren().get(childCount).getValue().getName().toLowerCase().contains(target)) {
                             childList.add(root.getChildren().get(parentCount).getChildren().get(childCount).getValue());
-                            System.out.println(root.getChildren().get(parentCount).getChildren().get(childCount).getValue());
                         }
                     }
                 }
@@ -621,10 +689,8 @@ public class PrimaryController implements Initializable {
                 rootSearch.getChildren().iterator().forEachRemaining(e -> e.setExpanded(true));
                 tree.setRoot(rootSearch);
                 tree.refresh();
-                System.out.println(dialog.resultProperty() + ", " + target);
             }
         } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
-            System.out.println("Нажата кнопка отмена");
         }
 
     }
@@ -731,7 +797,6 @@ public class PrimaryController implements Initializable {
             Platform.runLater(() -> initialize(location, resources));
         }
         } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
-            System.out.println("Нажата кнопка отмена");
         }
 
     }

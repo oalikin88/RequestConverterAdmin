@@ -24,7 +24,6 @@ public class TreeViewManipulations {
         for (int i = 0; i < inputList.size(); i++) {
             if (inputList.get(i).getOpfr().equals("000") && inputList.get(i).getUpfr().equals("000")) {
                 parentsList.add(inputList.get(i));
-                System.out.println(inputList.get(i));
             }
         }
 
@@ -49,10 +48,11 @@ public class TreeViewManipulations {
         TreeItem<Request> parent = new TreeItem<>(new Request("Запросы"));
         for (int i = 0; i < inputList.size(); i++) {
             parent.getChildren().add(new TreeItem<>(inputList.get(i)));
-
         }
         parent.setExpanded(true);
         return parent;
     }
 
+    
+    
 }
