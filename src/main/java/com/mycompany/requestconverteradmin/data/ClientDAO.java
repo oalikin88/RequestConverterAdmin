@@ -30,46 +30,47 @@ public class ClientDAO {
 
     
       public void addRequest(String name, String shortName) throws IOException {
-        try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(ADD_REQUEST)) {
+          DBConnection dBConnection = new DBConnection();
+        try ( var connection = dBConnection.getConnection();  var preparedStatement = connection.prepareStatement(ADD_REQUEST)) {
 
             preparedStatement.setString(1, name);
             preparedStatement.setString(2, shortName);
             preparedStatement.executeUpdate();
 
         } catch (SQLException throwable) {
-            throwable.printStackTrace();
             throw new DaoException(throwable);
         }
 
     }
       
        public void editRequest(int id, String name, String shortName) throws IOException {
-        try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(UPDATE_REQUEST)) {
+           DBConnection dBConnection = new DBConnection();
+        try ( var connection = dBConnection.getConnection();  var preparedStatement = connection.prepareStatement(UPDATE_REQUEST)) {
             preparedStatement.setString(1, name);
             preparedStatement.setString(2, shortName);
             preparedStatement.setInt(3, id);
             preparedStatement.executeUpdate();
 
         } catch (SQLException throwable) {
-            throwable.printStackTrace();
             throw new DaoException(throwable);
         }
     }
        
        
           public void deleteRequest(int id) throws IOException {
-        try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(DELETE_REQUEST)) {
+              DBConnection dBConnection = new DBConnection();
+        try ( var connection = dBConnection.getConnection();  var preparedStatement = connection.prepareStatement(DELETE_REQUEST)) {
             preparedStatement.setInt(1, id);
             preparedStatement.executeUpdate();
         } catch (SQLException throwable) {
-            throwable.printStackTrace();
             throw new DaoException(throwable);
         }
     }
     
 
     public List<Record> findAllRecords() throws IOException {
-        try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(FIND_ALL_SPR)) {
+        DBConnection dBConnection = new DBConnection();
+        try ( var connection = dBConnection.getConnection();  var preparedStatement = connection.prepareStatement(FIND_ALL_SPR)) {
             var resultSet = preparedStatement.executeQuery();
             List<Record> records = new ArrayList<>();
             while (resultSet.next()) {
@@ -77,13 +78,13 @@ public class ClientDAO {
             }
             return records;
         } catch (SQLException throwable) {
-            throwable.printStackTrace();
             throw new DaoException(throwable);
         }
     }
     
       public List<Request> findAllRequests() throws IOException {
-        try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(FIND_ALL_REQUEST)) {
+          DBConnection dBConnection = new DBConnection();
+        try ( var connection = dBConnection.getConnection();  var preparedStatement = connection.prepareStatement(FIND_ALL_REQUEST)) {
             var resultSet = preparedStatement.executeQuery();
             List<Request> requests = new ArrayList<>();
             while (resultSet.next()) {
@@ -91,7 +92,6 @@ public class ClientDAO {
             }
             return requests;
         } catch (SQLException throwable) {
-            throwable.printStackTrace();
             throw new DaoException(throwable);
         }
     }
@@ -116,7 +116,8 @@ public class ClientDAO {
     }
 
     public void editRecord(int id, String subject, String opfr, String upfr) throws IOException {
-        try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(UPDATE_RECORD)) {
+        DBConnection dBConnection = new DBConnection();
+        try ( var connection = dBConnection.getConnection();  var preparedStatement = connection.prepareStatement(UPDATE_RECORD)) {
             preparedStatement.setString(1, subject);
             preparedStatement.setString(2, opfr);
             preparedStatement.setString(3, upfr);
@@ -130,7 +131,8 @@ public class ClientDAO {
     }
 
     public void addRecord(String subject, String opfr, String upfr, String name) throws IOException {
-        try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(ADD_RECORD)) {
+        DBConnection dBConnection = new DBConnection();
+        try ( var connection = dBConnection.getConnection();  var preparedStatement = connection.prepareStatement(ADD_RECORD)) {
 
             preparedStatement.setString(1, subject);
             preparedStatement.setString(2, opfr);
@@ -146,33 +148,29 @@ public class ClientDAO {
     }
 
     public void deleteRecord(int id) throws IOException {
-        try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(DELETE_RECORD)) {
+        DBConnection dBConnection = new DBConnection();
+        try ( var connection = dBConnection.getConnection();  var preparedStatement = connection.prepareStatement(DELETE_RECORD)) {
             preparedStatement.setInt(1, id);
             preparedStatement.executeUpdate();
         } catch (SQLException throwable) {
-            throwable.printStackTrace();
             throw new DaoException(throwable);
         }
     }
 
     public void importRecords(String[][] input) throws IOException {
+        DBConnection dBConnection = new DBConnection();
         for (int i = 0; i < input.length; i++) {
-
             String[] buf = new String[4];
             for (int j = 0; j < 4; j++) {
-
                 buf[j] = input[i][j];
             }
-
-            try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(ADD_RECORD)) {
-
+            try ( var connection = dBConnection.getConnection();  var preparedStatement = connection.prepareStatement(ADD_RECORD)) {
                 preparedStatement.setString(1, buf[0]);
                 preparedStatement.setString(2, buf[1]);
                 preparedStatement.setString(3, buf[2]);
                 preparedStatement.setString(4, buf[3]);
                 preparedStatement.executeUpdate();
             } catch (SQLException throwable) {
-                throwable.printStackTrace();
                 throw new DaoException(throwable);
             }
 
@@ -181,10 +179,10 @@ public class ClientDAO {
     }
 
     public void eraseSpr() throws IOException {
-        try ( var connection = DBConnection.getInstance().getConnection();  var preparedStatement = connection.prepareStatement(ERASE_SPR)) {
+        DBConnection dBConnection = new DBConnection();
+        try ( var connection = dBConnection.getConnection();  var preparedStatement = connection.prepareStatement(ERASE_SPR)) {
             preparedStatement.executeUpdate();
         } catch (SQLException throwable) {
-            throwable.printStackTrace();
             throw new DaoException(throwable);
         }
     }

@@ -77,11 +77,11 @@ public class Settings {
     
     
     
-    private static String path = "src/main/java/com/mycompany/requestconverteradmin/data/settings.txt";
+    private static String path = System.getProperty("user.dir") + "/data/settings.csv";
     private static Map<String, String> settingsMap = new HashMap<>();
     
     
-        public static Map<String, String> prepareSettings() throws IOException {
+        public Map<String, String> prepareSettings() throws IOException {
         try {
             Path getPath = Paths.get(path);
             List<String> list = Files.readAllLines(getPath);            

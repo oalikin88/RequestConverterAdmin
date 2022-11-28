@@ -7,7 +7,6 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import javafx.event.EventType;
 import javafx.scene.image.Image;
 
 /**
@@ -23,7 +22,7 @@ public class App extends Application {
         scene = new Scene(loadFXML("primary"), 900, 600);
         stage.setScene(scene);
         stage.setTitle("Конвертер запросов Админ");
-        stage.getIcons().add(new Image("icons/icon.png"));
+        stage.getIcons().add(new Image(getClass().getResource("/com/mycompany/requestconverteradmin/static/icons/icon.png").toExternalForm()));
         stage.show();
         
     }

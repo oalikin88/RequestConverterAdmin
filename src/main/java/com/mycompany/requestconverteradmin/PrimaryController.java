@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -154,6 +155,9 @@ public class PrimaryController implements Initializable {
     private List<Request> requests;
     private int requestID;
     private TreeItem<Record> root;
+    private Settings settings;
+    ClientDAO clientRecords;
+    ClientDAO clientRequests;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -166,8 +170,8 @@ public class PrimaryController implements Initializable {
                 statusBarInfo.setText("Попытка подключения к базе данных");
                 if (connection.getConnection() != null) {
                     anchorPane.disableProperty().set(false);
-                    ClientDAO clientRecords = new ClientDAO();
-                    ClientDAO clientRequests = new ClientDAO();
+                    clientRecords = new ClientDAO();
+                    clientRequests = new ClientDAO();
                     records = clientRecords.findAllRecords();
                     requests = clientRequests.findAllRequests();
                     Platform.runLater(() -> statusBarInfo.setText("Готов к работе"));
@@ -373,9 +377,9 @@ public class PrimaryController implements Initializable {
                                     String shortName = fieldShortName.getText();
                                     
                                     clientRequests.addRequest(name, shortName);
-                                    Request recuest = new Request(name, shortName);
-                                    TreeItem<Request> newRequestItem = new TreeItem<>(recuest);
-                                    selectedRequestItem.getParent().getChildren().add(newRequestItem);
+                                    Request request = new Request(name, shortName);
+                                    TreeItem<Request> newRequestItem = new TreeItem<>(request);
+                                    selectedRequestItem.getChildren().add(newRequestItem);
                                     treeRequest.refresh();
                                 } catch (IOException ex) {
                                     Logger.getLogger(PrimaryController.class.getName()).log(Level.SEVERE, null, ex);
@@ -536,8 +540,7 @@ public class PrimaryController implements Initializable {
     }
 
     @FXML
-    void actionImport(ActionEvent event) throws IOException {
-        ClientDAO clientRecords = new ClientDAO();
+    void actionImport(ActionEvent event) throws IOException { 
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Предупреждение");
         alert.setHeaderText("При импорте файла произойдёт очистка базы данных!");
@@ -560,8 +563,7 @@ public class PrimaryController implements Initializable {
 
     @FXML
     public void submit() {
-        try {
-            ClientDAO clientRecords = new ClientDAO();
+        try {    
             String subject = subjectID.getText();
             String opfr = opfrID.getText();
             String upfr = upfrID.getText();
@@ -577,22 +579,24 @@ public class PrimaryController implements Initializable {
 
     @FXML
     void actionAbout(ActionEvent event) {
+        
         Dialog<ButtonType> dialog = new Dialog();
         DialogPane dialogPane = dialog.getDialogPane();
-        dialog.setWidth(400.0);
-        dialog.setHeight(300.0);
-        dialogPane.setMaxHeight(300.0);
-        dialogPane.setMaxWidth(400.0);
+        
+        dialog.getDialogPane().setMinHeight(250.0);
+        dialog.getDialogPane().setMinWidth(500.0);
         dialog.setTitle("О программе");
         dialog.setHeaderText(null);
         TextFlow textFlow = new TextFlow();
         VBox vBox = new VBox();
-        Text author = new Text("Разработка: Олег Аликин");
-        Text info = new Text("Отдел эксплуатации и сопровождения информационных подсистем Отделения ПФР по Белгородской области.");
-        Text email = new Text("email: alikino@041.pfr.gov.ru");
-        info.setWrappingWidth(250);
+        Text name = new Text("Конвертор запросов Админ");
+        Text author = new Text("Разработка: Аликин Олег Сергеевич");
+        Text info = new Text("Отдел эксплуатации и сопровождения информационных подсистем");
+        Text email = new Text("email: alikino@31.sfr.gov.ru");
+        Text copyright = new Text("© 2022 Отделение ПФР по Белгородской области");
+        info.setWrappingWidth(450);
         textFlow.getChildren().add(vBox);
-        vBox.getChildren().addAll(author, info, email);
+        vBox.getChildren().addAll(name, author, info, email, copyright);
         vBox.setSpacing(15.0);
         dialogPane.setContent(textFlow);
         dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
@@ -602,10 +606,9 @@ public class PrimaryController implements Initializable {
     @FXML
     void actionSubmitRequest(ActionEvent event) {
         try {
-            ClientDAO clientRequest = new ClientDAO();
             String name = requestValue.getText();
             String shortName = requestShortValue.getText();
-            clientRequest.editRequest(requestID, name, shortName);
+            clientRequests.editRequest(requestID, name, shortName);
             treeRequest.refresh();
             updateTreeViewRequestItem();
         } catch (IOException ex) {
@@ -724,7 +727,14 @@ public class PrimaryController implements Initializable {
 
     @FXML
     void properties(ActionEvent event) {
-
+        settings = new Settings();
+        Map<String, String> mapSettings = null;
+        try {
+            mapSettings = settings.prepareSettings();
+        } catch (IOException ex) {
+            Logger.getLogger(PrimaryController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        settings.getSettings(mapSettings);
         Dialog<ButtonType> dialog = new Dialog();
         DialogPane dialogPane = dialog.getDialogPane();
         dialog.setTitle("Настройки");
@@ -741,11 +751,11 @@ public class PrimaryController implements Initializable {
         TextField fieldUsername = new TextField();
         Label labelPassword = new Label("Пароль");
         TextField fieldPassword = new TextField();
-        fieldUrl.setText(DBConnection.getURL());
-        fieldDataBaseName.setText(DBConnection.getDB_NAME());
-        fieldUsername.setText(DBConnection.getUSER());
-        fieldPassword.setText(DBConnection.getPASSWORD());
-        fieldPort.setText(DBConnection.getPORT());
+        fieldUrl.setText(settings.getUrl());
+        fieldDataBaseName.setText(settings.getDbName());
+        fieldUsername.setText(settings.getUsername());
+        fieldPassword.setText(settings.getPassword());
+        fieldPort.setText(settings.getPort());
         StackPane stackPane1 = new StackPane();
         StackPane stackPane2 = new StackPane();
         StackPane stackPane3 = new StackPane();
