@@ -14,9 +14,9 @@ import javafx.scene.control.TreeItem;
  */
 public class TreeViewManipulations {
 
-    public static TreeItem<Record> updateTreeViewRecordList(List<Record> inputList) {
+    public static TreeItem<Record> updateTreeViewRecordList(List<Record> inputList, String name) {
 
-        TreeItem<Record> root = new TreeItem<>(new Record("Регионы"));
+        TreeItem<Record> root = new TreeItem<>(new Record(name));
 
         TreeItem<Record> parent = new TreeItem<>();
         List<Record> parentsList = new ArrayList<>();

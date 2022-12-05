@@ -260,7 +260,6 @@
           <Menu mnemonicParsing="false" text="Меню">
             <items>
                   <MenuItem fx:id="importFile" mnemonicParsing="false" onAction="#actionImport" text="Импортировать файл" />
-                  <MenuItem mnemonicParsing="false" onAction="#actionSearch" text="Поиск" />
                   <MenuItem mnemonicParsing="false" onAction="#properties" text="Настройки" />
               <MenuItem fx:id="exit" mnemonicParsing="false" text="Закрыть" />
             </items>

@@ -6,6 +6,8 @@ import com.mycompany.requestconverteradmin.data.ClientDAO;
 import com.mycompany.requestconverteradmin.data.Content;
 import com.mycompany.requestconverteradmin.data.Request;
 import com.mycompany.requestconverteradmin.data.Settings;
+import com.mycompany.requestconverteradmin.data.Spr;
+import com.mycompany.requestconverteradmin.data.SprType;
 import com.mycompany.requestconverteradmin.data.TreeViewManipulations;
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +24,8 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -33,6 +37,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
@@ -138,26 +144,31 @@ public class PrimaryController implements Initializable {
 
     @FXML
     private Button refreshButton;
-    
+
     @FXML
     private Button submitRequest;
 
     @FXML
     private Label statusBarInfo;
-    
+
     @FXML
     private AnchorPane anchorPane;
 
     private int recordID;
-    private List<Record> records;
+    private List<Record> recordsSpr;
+    private List<Record> recordsSprVd;
     private TreeItem<Record> selectedRecordItem;
     private TreeItem<Request> selectedRequestItem;
     private List<Request> requests;
     private int requestID;
     private TreeItem<Record> root;
+    private TreeItem<Record> rootVd;
     private Settings settings;
-    ClientDAO clientRecords;
-    ClientDAO clientRequests;
+    private ClientDAO clientRecords;
+    private ClientDAO clientRequests;
+    private Spr spr;
+    private Spr sprVd;
+    private MultipleSelectionModel<TreeItem<Record>> selectionModel;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -170,35 +181,38 @@ public class PrimaryController implements Initializable {
                 statusBarInfo.setText("Попытка подключения к базе данных");
                 if (connection.getConnection() != null) {
                     anchorPane.disableProperty().set(false);
-                    clientRecords = new ClientDAO();
+                    spr = new Spr(SprType.SPR);
+                    sprVd = new Spr(SprType.SPR_VD);
                     clientRequests = new ClientDAO();
-                    records = clientRecords.findAllRecords();
+                    recordsSpr = spr.getSpr();
+                    recordsSprVd = sprVd.getSpr();
                     requests = clientRequests.findAllRequests();
                     Platform.runLater(() -> statusBarInfo.setText("Готов к работе"));
-                    // Формируем список регионов и заполняем таблицу данными
-                    root = TreeViewManipulations.updateTreeViewRecordList(records);
+                    // Формируем список регионов и заполняем список данными
+                    root = TreeViewManipulations.updateTreeViewRecordList(recordsSpr, "Запросы пенсионно-социального характера");
+                    root.expandedProperty().set(false);
+                    rootVd = TreeViewManipulations.updateTreeViewRecordList(recordsSprVd, "Запросы выплатных дел");
+                    rootVd.expandedProperty().set(false);
+                    TreeItem<Record> parentRec = new TreeItem<>(new Record("Запросы"));
                     TreeItem<Request> parent = TreeViewManipulations.updateTreeViewRequestList(requests);
-                    tree.setRoot(root);
+                    parentRec.getChildren().add(root);
+                    parentRec.getChildren().add(rootVd);
+                    parentRec.expandedProperty().set(true);
+                    tree.setRoot(parentRec);
                     treeRequest.setRoot(parent);
-
-                    MultipleSelectionModel<TreeItem<Record>> selectionModel = tree.getSelectionModel();
+                    selectionModel = tree.getSelectionModel();
                     MultipleSelectionModel<TreeItem<Request>> selectionModelRequest = treeRequest.getSelectionModel();
-
                     tree.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
 
                         @Override
                         public void changed(ObservableValue observable, Object oldValue,
                                 Object newValue) {
-
                             selectedRecordItem = (TreeItem<Record>) newValue;
-
                             recordID = selectedRecordItem.getValue().getId();
                             subjectID.setText(selectedRecordItem.getValue().getSubject());
                             opfrID.setText(selectedRecordItem.getValue().getOpfr());
                             upfrID.setText(selectedRecordItem.getValue().getUpfr());
-
                         }
-
                     });
 
                     treeRequest.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
@@ -206,13 +220,10 @@ public class PrimaryController implements Initializable {
                         @Override
                         public void changed(ObservableValue observable, Object oldValue,
                                 Object newValue) {
-
                             selectedRequestItem = (TreeItem<Request>) newValue;
-
                             requestID = selectedRequestItem.getValue().getId();
                             requestShortValue.setText(selectedRequestItem.getValue().getShortName());
                             requestValue.setText(selectedRequestItem.getValue().getName());
-
                         }
 
                     });
@@ -268,21 +279,25 @@ public class PrimaryController implements Initializable {
                                 new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE));
                         dialog.setResizable(true);
                         Optional<ButtonType> result = dialog.showAndWait();
-
                         if (result.isPresent()) {
                             if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
-
                                 try {
-                                    String subject = code1.getText();
-                                    String opfr = code2.getText();
-                                    String upfr = code3.getText();
-                                    String nameRegion = name.getText();
-                                    clientRecords.addRecord(subject, opfr, upfr, nameRegion);
-                                    Record rec = new Record(subject, opfr, upfr, nameRegion);
-                                    TreeItem<Record> newRecordItem = new TreeItem<>(rec);
-                                    selectedRecordItem.getChildren().add(newRecordItem);
+                                    Record record = new Record();
+                                    record.setSubject(code1.getText());
+                                    record.setOpfr(code2.getText());
+                                    record.setUpfr(code3.getText());
+                                    record.setName(name.getText());
+                                    System.out.println(selectionModel.getSelectedItems().iterator().next().getParent());
+                                    selectionModel.getSelectedItems().iterator().next().getChildren().add(new TreeItem<>(record));
+                                    if (selectionModel.getSelectedItems().iterator().next().getValue().equals("Запросы пенсионно-социального характера")) {
+                                        spr.getRecords().add(record);
+                                        spr.addRecord();
+                                    } else {
+                                        sprVd.getRecords().add(record);
+                                        sprVd.addRecord();
+                                    }
                                     tree.refresh();
-                                } catch (IOException ex) {
+                                } catch (Exception ex) {
                                     Logger.getLogger(PrimaryController.class.getName()).log(Level.SEVERE, null, ex);
                                 }
                             }
@@ -290,7 +305,6 @@ public class PrimaryController implements Initializable {
                         }
 
                     });
-
                     delElement.setOnAction(event -> {
                         Dialog<ButtonType> dialog = new Dialog();
                         DialogPane dialogPane = dialog.getDialogPane();
@@ -299,16 +313,22 @@ public class PrimaryController implements Initializable {
                         dialog.getDialogPane().getButtonTypes().addAll(
                                 new ButtonType("Удалить", ButtonBar.ButtonData.YES),
                                 new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE));
-
                         Optional<ButtonType> result = dialog.showAndWait();
                         if (result.isPresent()) {
                             if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.YES) {
                                 try {
                                     int id = selectedRecordItem.getValue().getId();
-                                    clientRecords.deleteRecord(id);
-                                    selectedRecordItem.getParent().getChildren().remove(selectedRecordItem);
+                                    if (selectionModel.getSelectedItems().iterator().next().getValue().getName().equals("Запросы пенсионно-социального характера")
+                                            || selectionModel.getSelectedItems().iterator().next().getParent().getValue().getName().equals("Запросы пенсионно-социального характера")
+                                            || selectionModel.getSelectedItems().iterator().next().getParent().getParent().getValue().getName().equals("Запросы пенсионно-социального характера")) {
+                                        spr.delRecord(id);
+                                        selectedRecordItem.getParent().getChildren().remove(selectedRecordItem);
+                                    } else {
+                                        sprVd.delRecord(id);
+                                        selectedRecordItem.getParent().getChildren().remove(selectedRecordItem);
+                                    }
                                     tree.refresh();
-                                } catch (IOException ex) {
+                                } catch (Exception ex) {
                                     Logger.getLogger(PrimaryController.class.getName()).log(Level.SEVERE, null, ex);
                                 }
                             } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
@@ -375,7 +395,7 @@ public class PrimaryController implements Initializable {
                                 try {
                                     String name = fieldName.getText();
                                     String shortName = fieldShortName.getText();
-                                    
+
                                     clientRequests.addRequest(name, shortName);
                                     Request request = new Request(name, shortName);
                                     TreeItem<Request> newRequestItem = new TreeItem<>(request);
@@ -396,16 +416,24 @@ public class PrimaryController implements Initializable {
                     inputSearchLine.setOnKeyTyped(event -> {
 
                         if (!inputSearchLine.getText().isEmpty() && !inputSearchLine.getText().isBlank()) {
-                            TreeItem<Record> rootSearch = new TreeItem<>(new Record("Регионы"));
-                            TreeItem<Record> parentSearch = new TreeItem<>();
+                            TreeItem<Record> rootSearch = new TreeItem<>(new Record("Запросы"));
+                            TreeItem<Record> rootSearch1 = new TreeItem<>(new Record("Запросы пенсионно-социального характера"));
+                            TreeItem<Record> rootSearch2 = new TreeItem<>(new Record("Запросы выплатных дел"));
+                            TreeItem<Record> parentSearch1 = new TreeItem<>();
+                            TreeItem<Record> parentSearch2 = new TreeItem<>();
                             List<Record> childList = new ArrayList<>();
+                            List<Record> childListVd = new ArrayList<>();
                             List<Record> parentList = new ArrayList<>();
+                            List<Record> parentListVd = new ArrayList<>();
 
                             String target = inputSearchLine.getText().trim().toLowerCase();
                             int parentCount;
                             int childCount;
                             for (int i = 0; i < root.getChildren().size(); i++) {
                                 parentList.add(root.getChildren().get(i).getValue());
+                            }
+                            for (int i = 0; i < rootVd.getChildren().size(); i++) {
+                                parentListVd.add(rootVd.getChildren().get(i).getValue());
                             }
                             for (parentCount = 0; parentCount < root.getChildren().size(); parentCount++) {
                                 for (childCount = 0; childCount < root.getChildren().get(parentCount).getChildren().size(); childCount++) {
@@ -414,22 +442,47 @@ public class PrimaryController implements Initializable {
                                     }
                                 }
                             }
+                            for (parentCount = 0; parentCount < rootVd.getChildren().size(); parentCount++) {
+                                for (childCount = 0; childCount < rootVd.getChildren().get(parentCount).getChildren().size(); childCount++) {
+                                    if (rootVd.getChildren().get(parentCount).getChildren().get(childCount).getValue().getName().toLowerCase().contains(target)) {
+                                        childListVd.add(rootVd.getChildren().get(parentCount).getChildren().get(childCount).getValue());
+                                    }
+                                }
+                            }
                             for (int out = 0; out < parentList.size(); out++) {
-                                parentSearch = new TreeItem<>(parentList.get(out));
-                                rootSearch.getChildren().add(parentSearch);
+                                parentSearch1 = new TreeItem<>(parentList.get(out));
+                                rootSearch1.getChildren().add(parentSearch1);
                                 for (int inner = 0; inner < childList.size(); inner++) {
                                     if (childList.get(inner).getSubject().equals(parentList.get(out).getSubject())
                                             && (!childList.get(inner).getOpfr().equals(parentList.get(out).getOpfr())
                                             || !childList.get(inner).getUpfr().equals(parentList.get(out).getUpfr()))) {
-                                        parentSearch.getChildren().add(new TreeItem<>(childList.get(inner)));
+                                        parentSearch1.getChildren().add(new TreeItem<>(childList.get(inner)));
+                                    }
+                                }
+
+                            }
+                            for (int out = 0; out < parentListVd.size(); out++) {
+                                parentSearch2 = new TreeItem<>(parentListVd.get(out));
+                                rootSearch2.getChildren().add(parentSearch2);
+                                for (int inner = 0; inner < childListVd.size(); inner++) {
+                                    if (childListVd.get(inner).getSubject().equals(parentListVd.get(out).getSubject())
+                                            && (!childListVd.get(inner).getOpfr().equals(parentListVd.get(out).getOpfr())
+                                            || !childListVd.get(inner).getUpfr().equals(parentListVd.get(out).getUpfr()))) {
+                                        parentSearch2.getChildren().add(new TreeItem<>(childListVd.get(inner)));
                                     }
                                 }
 
                             }
 
-                            rootSearch.getChildren().setAll(rootSearch.getChildren().filtered(e -> !e.getChildren().isEmpty()).stream().collect(Collectors.toList()));
+                            rootSearch1.getChildren().setAll(rootSearch1.getChildren().filtered(e -> !e.getChildren().isEmpty()).stream().collect(Collectors.toList()));
+                            rootSearch2.getChildren().setAll(rootSearch2.getChildren().filtered(e -> !e.getChildren().isEmpty()).stream().collect(Collectors.toList()));
+                            rootSearch.getChildren().add(rootSearch1);
+                            rootSearch.getChildren().add(rootSearch2);
                             rootSearch.setExpanded(true);
-                            rootSearch.getChildren().iterator().forEachRemaining(e -> e.setExpanded(true));
+                            rootSearch1.setExpanded(true);
+                            rootSearch2.setExpanded(true);
+                            rootSearch1.getChildren().iterator().forEachRemaining(e -> e.setExpanded(true));
+                            rootSearch2.getChildren().iterator().forEachRemaining(e -> e.setExpanded(true));
                             tree.setRoot(rootSearch);
                             tree.refresh();
                         }
@@ -439,14 +492,10 @@ public class PrimaryController implements Initializable {
                     refreshButton.setTooltip(new Tooltip("Сбросить результат поиска"));
 
                 } else {
-
                     Platform.runLater(() -> statusBarInfo.setText("Не удалось подключиться к базе данных"));
                     Platform.runLater(() -> anchorPane.disableProperty().set(true));
-
                 }
-
                 return null;
-
             }
 
             @Override
@@ -457,132 +506,157 @@ public class PrimaryController implements Initializable {
         };
 
         Platform.runLater(connect);
-        
+
         requestShortValue.disableProperty().set(true);
         requestValue.disableProperty().set(true);
         subjectID.disableProperty().set(true);
         opfrID.disableProperty().set(true);
         upfrID.disableProperty().set(true);
-        
-        
+
         subjectID.textProperty().addListener((o) -> {
-           
-            if(selectedRecordItem.valueProperty() != null) {
-                if(selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Регионы")) {
+
+            if (selectedRecordItem.valueProperty() != null) {
+                if (selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Запросы")) {
                     subjectID.disableProperty().set(true);
                 } else {
                     subjectID.disableProperty().set(false);
                 }
             }
-                  
-            
+
         });
-        
-               opfrID.textProperty().addListener((o) -> {
-           
-            if(selectedRecordItem.valueProperty() != null) {
-                if(selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Регионы")) {
+
+        opfrID.textProperty().addListener((o) -> {
+
+            if (selectedRecordItem.valueProperty() != null) {
+                if (selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Запросы")) {
                     opfrID.disableProperty().set(true);
                 } else {
                     opfrID.disableProperty().set(false);
                 }
             }
-                  
-            
+
         });
-               
-                    upfrID.textProperty().addListener((o) -> {
-           
-            if(selectedRecordItem.valueProperty() != null) {
-                if(selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Регионы")) {
+
+        upfrID.textProperty().addListener((o) -> {
+
+            if (selectedRecordItem.valueProperty() != null) {
+                if (selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Запросы")) {
                     upfrID.disableProperty().set(true);
                 } else {
                     upfrID.disableProperty().set(false);
                 }
             }
-                  
-            
+
         });
-        
-        
-         btn.disableProperty().bind(Bindings.notEqual(subjectID.lengthProperty(), 3)
-                 .or(Bindings.notEqual(opfrID.lengthProperty(), 3))
-                 .or(Bindings.notEqual(upfrID.lengthProperty(), 3)));
-         
-         submitRequest.disableProperty().bind(Bindings.isEmpty(requestValue.textProperty())
-         .or(Bindings.isEmpty(requestShortValue.textProperty())));
-         
-         
-       requestShortValue.textProperty().addListener((o) -> {
-           if(selectedRequestItem.valueProperty() != null) {
-              if(selectedRequestItem.getValue().getName().equalsIgnoreCase("Запросы")) {
-                  requestShortValue.disableProperty().set(true);
-              } else {
-                  
-           requestShortValue.disableProperty().set(false);
-           }
-           } 
-       });
-               
-       
+
+        btn.disableProperty().bind(Bindings.notEqual(subjectID.lengthProperty(), 3)
+                .or(Bindings.notEqual(opfrID.lengthProperty(), 3))
+                .or(Bindings.notEqual(upfrID.lengthProperty(), 3)));
+
+        submitRequest.disableProperty().bind(Bindings.isEmpty(requestValue.textProperty())
+                .or(Bindings.isEmpty(requestShortValue.textProperty())));
+
+        requestShortValue.textProperty().addListener((o) -> {
+            if (selectedRequestItem.valueProperty() != null) {
+                if (selectedRequestItem.getValue().getName().equalsIgnoreCase("Запросы")) {
+                    requestShortValue.disableProperty().set(true);
+                } else {
+                    requestShortValue.disableProperty().set(false);
+                }
+            }
+        });
+
         requestValue.textProperty().addListener((o) -> {
-           if(selectedRequestItem.valueProperty() != null) {
-              if(selectedRequestItem.getValue().getName().equalsIgnoreCase("Запросы")) {
-                  requestValue.disableProperty().set(true);
-              } else {
-                  
-           requestValue.disableProperty().set(false);
-           }
-           } 
-       });
-       
-       
+            if (selectedRequestItem.valueProperty() != null) {
+                if (selectedRequestItem.getValue().getName().equalsIgnoreCase("Запросы")) {
+                    requestValue.disableProperty().set(true);
+                } else {
+
+                    requestValue.disableProperty().set(false);
+                }
+            }
+        });
+
     }
 
     @FXML
-    void actionImport(ActionEvent event) throws IOException { 
+    void actionImport(ActionEvent event) throws IOException {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Предупреждение");
         alert.setHeaderText("При импорте файла произойдёт очистка базы данных!");
         alert.setContentText("Вы уверены что хотите выполнить импорт файла?");
         Optional<ButtonType> result = alert.showAndWait();
         if (result.get() == ButtonType.OK) {
-            clientRecords.eraseSpr();
-            Stage stage = new Stage();
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Выберите файл для импорта");
-            fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "/desktop"));
-            fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("csv", "*.csv"));
-            File selectedFile = fileChooser.showOpenDialog(stage);
-            List<String> content = Content.getContent(selectedFile);
-            String[][] prepareContent = Content.recordListTransform(content);
-            clientRecords.importRecords(prepareContent);
+
+            ChoiceDialog dialog = new ChoiceDialog();
+            dialog.getItems().add("Запросы пенсионно-социального характера");
+            dialog.getItems().add("Запросы выплатных дел");
+            dialog.setSelectedItem(dialog.getItems().get(0));
+            dialog.setTitle("Импорт справочника");
+            dialog.setHeaderText("Какой справочник импортировать в БД?");
+            Optional<String> res = dialog.showAndWait();
+            if (res.isPresent()) {
+                System.out.println(res.get());
+                if (res.get().equals("Запросы выплатных дел")) {
+                    sprVd.eraseSpr();
+                    Stage stage = new Stage();
+                    FileChooser fileChooser = new FileChooser();
+                    fileChooser.setTitle("Выберите файл для импорта");
+                    fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "/desktop"));
+                    fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("csv", "*.csv"));
+                    File selectedFile = fileChooser.showOpenDialog(stage);
+                    List<String> content = Content.getContent(selectedFile);
+                    String[][] prepareContent = Content.recordListTransform(content);
+                    sprVd.importSpr(prepareContent);
+                } else {
+                    spr.eraseSpr();
+                    Stage stage = new Stage();
+                    FileChooser fileChooser = new FileChooser();
+                    fileChooser.setTitle("Выберите файл для импорта");
+                    fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "/desktop"));
+                    fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("csv", "*.csv"));
+                    File selectedFile = fileChooser.showOpenDialog(stage);
+                    List<String> content = Content.getContent(selectedFile);
+                    String[][] prepareContent = Content.recordListTransform(content);
+                    spr.importSpr(prepareContent);
+                }
+                Platform.runLater(() -> statusBarInfo.setText("Импортирование завершено. Перезапустите приложение"));
+            } else {
+                System.out.println("Нажата кнопка Cancel");
+            }
         }
 
     }
 
     @FXML
     public void submit() {
-        try {    
-            String subject = subjectID.getText();
-            String opfr = opfrID.getText();
-            String upfr = upfrID.getText();
-            
-            clientRecords.editRecord(recordID, subject, opfr, upfr);
+        try {
+            Record record = new Record();
+            record.setSubject(subjectID.getText());
+            record.setOpfr(opfrID.getText());
+            record.setUpfr(upfrID.getText());
+            record.setId(recordID);
+            if(selectionModel.getSelectedItems().iterator().next().getValue().getName().equals("Запросы пенсионно-социального характера")
+                                            || selectionModel.getSelectedItems().iterator().next().getParent().getValue().getName().equals("Запросы пенсионно-социального характера")
+                                            || selectionModel.getSelectedItems().iterator().next().getParent().getParent().getValue().getName().equals("Запросы пенсионно-социального характера")) {
+             spr.editRecord(record);
+            } else {
+             sprVd.editRecord(record);
+            }
             tree.refresh();
             updateTreeViewRecordItem();
-            
-        } catch (IOException ex) {
+
+        } catch (Exception ex) {
             Logger.getLogger(PrimaryController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     @FXML
     void actionAbout(ActionEvent event) {
-        
+
         Dialog<ButtonType> dialog = new Dialog();
         DialogPane dialogPane = dialog.getDialogPane();
-        
+
         dialog.getDialogPane().setMinHeight(250.0);
         dialog.getDialogPane().setMinWidth(500.0);
         dialog.setTitle("О программе");
@@ -634,76 +708,18 @@ public class PrimaryController implements Initializable {
     }
 
     @FXML
-    void actionSearch(ActionEvent event) {
-
-        Dialog<ButtonType> dialog = new Dialog();
-        DialogPane dialogPane = dialog.getDialogPane();
-        dialog.setTitle("Поиск");
-        dialog.setHeaderText("Поиск элемента");
-        dialog.initModality(Modality.NONE);
-        GridPane gridPane = new GridPane();
-        dialogPane.setContent(gridPane);
-
-        Label searchRequestLabel = new Label("Найти");
-        TextField searchRequestField = new TextField();
-        gridPane.add(searchRequestLabel, 0, 0);
-        gridPane.add(searchRequestField, 1, 0);
-        GridPane.setMargin(searchRequestLabel, new Insets(0, 15, 0, 0));
-        dialog.getDialogPane().getButtonTypes().addAll(
-                new ButtonType("Найти", ButtonBar.ButtonData.OK_DONE),
-                new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE));
-
-        Optional<ButtonType> result = dialog.showAndWait();
-        TreeItem<Record> rootSearch = new TreeItem<>(new Record("Запросы"));
-        TreeItem<Record> parentSearch = new TreeItem<>();
-        List<Record> childList = new ArrayList<>();
-        List<Record> parentList = new ArrayList<>();
-
-        if (result.isPresent()) {
-            if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
-                String target = searchRequestField.getText().trim().toLowerCase();
-                int parentCount;
-                int childCount;
-                for (int i = 0; i < root.getChildren().size(); i++) {
-                    parentList.add(root.getChildren().get(i).getValue());
-                }
-                for (parentCount = 0; parentCount < root.getChildren().size(); parentCount++) {
-                    for (childCount = 0; childCount < root.getChildren().get(parentCount).getChildren().size(); childCount++) {
-                        if (root.getChildren().get(parentCount).getChildren().get(childCount).getValue().getName().toLowerCase().contains(target)) {
-                            childList.add(root.getChildren().get(parentCount).getChildren().get(childCount).getValue());
-                        }
-                    }
-                }
-                for (int out = 0; out < parentList.size(); out++) {
-                    parentSearch = new TreeItem<>(parentList.get(out));
-                    rootSearch.getChildren().add(parentSearch);
-                    for (int inner = 0; inner < childList.size(); inner++) {
-                        if (childList.get(inner).getSubject().equals(parentList.get(out).getSubject())
-                                && (!childList.get(inner).getOpfr().equals(parentList.get(out).getOpfr())
-                                || !childList.get(inner).getUpfr().equals(parentList.get(out).getUpfr()))) {
-                            parentSearch.getChildren().add(new TreeItem<>(childList.get(inner)));
-                        }
-                    }
-
-                }
-
-                rootSearch.getChildren().setAll(rootSearch.getChildren().filtered(e -> !e.getChildren().isEmpty()).stream().collect(Collectors.toList()));
-                rootSearch.setExpanded(true);
-                rootSearch.getChildren().iterator().forEachRemaining(e -> e.setExpanded(true));
-                tree.setRoot(rootSearch);
-                tree.refresh();
-            }
-        } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
-        }
-
-    }
-
-    @FXML
     void refreshBtn(ActionEvent event) {
         inputSearchLine.setText(null);
-        root = TreeViewManipulations.updateTreeViewRecordList(records);
+        root = TreeViewManipulations.updateTreeViewRecordList(recordsSpr, "Запросы пенсионно-социального характера");
+        root.expandedProperty().set(false);
+        rootVd = TreeViewManipulations.updateTreeViewRecordList(recordsSprVd, "Запросы выплатных дел");
+        rootVd.expandedProperty().set(false);
+        TreeItem<Record> parentRec = new TreeItem<>(new Record("Запросы"));
         TreeItem<Request> parent = TreeViewManipulations.updateTreeViewRequestList(requests);
-        tree.setRoot(root);
+        parentRec.getChildren().add(root);
+        parentRec.getChildren().add(rootVd);
+        parentRec.expandedProperty().set(true);
+        tree.setRoot(parentRec);
         treeRequest.setRoot(parent);
     }
 
@@ -766,7 +782,7 @@ public class PrimaryController implements Initializable {
         StackPane stackPane8 = new StackPane();
         StackPane stackPane9 = new StackPane();
         StackPane stackPane10 = new StackPane();
-        
+
         stackPane1.getChildren().add(labelUrl);
         stackPane2.getChildren().add(fieldUrl);
         stackPane3.getChildren().add(labelPort);
@@ -795,17 +811,17 @@ public class PrimaryController implements Initializable {
         Optional<ButtonType> result = dialog.showAndWait();
 
         if (result.isPresent()) {
-        if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
-            Settings newSetting = new Settings();
-            newSetting.setDbName(fieldDataBaseName.getText());
-            newSetting.setPort(fieldPort.getText());
-            newSetting.setUrl(fieldUrl.getText());
-            newSetting.setUsername(fieldUsername.getText());
-            newSetting.setPassword(fieldPassword.getText());
-            Settings.changeSettings(newSetting);
-            Settings.saveSettings();
-            Platform.runLater(() -> initialize(location, resources));
-        }
+            if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
+                Settings newSetting = new Settings();
+                newSetting.setDbName(fieldDataBaseName.getText());
+                newSetting.setPort(fieldPort.getText());
+                newSetting.setUrl(fieldUrl.getText());
+                newSetting.setUsername(fieldUsername.getText());
+                newSetting.setPassword(fieldPassword.getText());
+                Settings.changeSettings(newSetting);
+                Settings.saveSettings();
+                Platform.runLater(() -> initialize(location, resources));
+            }
         } else if (result.orElseThrow().getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
         }
 
