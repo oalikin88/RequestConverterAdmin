@@ -20,12 +20,12 @@ public class ClientDAO {
 
     private static final String FIND_ALL_SPR = "SELECT id, subject, opfr, upfr, name FROM ";
     private static final String FIND_ALL_REQUEST = "SELECT id, name, short_name FROM request";
-    private static final String UPDATE_RECORD = "UPDATE spr set subject = ?, opfr = ?, upfr = ? where id = ?";
+    private static final String UPDATE_RECORD = "UPDATE spr set subject = ?, opfr = ?, upfr = ?, name = ? WHERE id = ?";
     private static final String ADD_RECORD = "INSERT INTO spr (subject, opfr, upfr, name) VALUES(?,?,?,?)";
     private static final String DELETE_RECORD = "DELETE FROM spr WHERE id = ?";
     private static final String ERASE_SPR = "DELETE FROM spr";
     private static final String ADD_REQUEST = "INSERT INTO request (name, short_name) VALUES(?,?)";
-    private static final String UPDATE_REQUEST = "UPDATE request set name = ?, short_name = ? where id = ?";
+    private static final String UPDATE_REQUEST = "UPDATE request set name = ?, short_name = ? WHERE id = ?";
     private static final String DELETE_REQUEST = "DELETE FROM request WHERE id = ?";
 
     public static String getFIND_ALL_SPR() {
@@ -163,7 +163,8 @@ public class ClientDAO {
             preparedStatement.setString(1, record.getSubject());
             preparedStatement.setString(2, record.getOpfr());
             preparedStatement.setString(3, record.getUpfr());
-            preparedStatement.setInt(4, record.getId());
+            preparedStatement.setString(4, record.getName());
+            preparedStatement.setInt(5, record.getId());
             preparedStatement.executeUpdate();
 
         } catch (SQLException throwable) {

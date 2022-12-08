@@ -24,8 +24,6 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -37,7 +35,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
@@ -45,6 +42,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.MultipleSelectionModel;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
@@ -153,6 +151,9 @@ public class PrimaryController implements Initializable {
 
     @FXML
     private AnchorPane anchorPane;
+    
+    @FXML
+    private TextField nameRegion;
 
     private int recordID;
     private List<Record> recordsSpr;
@@ -176,7 +177,6 @@ public class PrimaryController implements Initializable {
         Task connect = new Task() {
             @Override
             protected Object call() throws Exception {
-
                 DBConnection connection = new DBConnection();
                 statusBarInfo.setText("Попытка подключения к базе данных");
                 if (connection.getConnection() != null) {
@@ -185,7 +185,9 @@ public class PrimaryController implements Initializable {
                     sprVd = new Spr(SprType.SPR_VD);
                     clientRequests = new ClientDAO();
                     recordsSpr = spr.getSpr();
+                    recordsSpr.sort((o1, o2) -> o1.getName().compareTo(o2.getName()));
                     recordsSprVd = sprVd.getSpr();
+                    recordsSprVd.sort((o1, o2) -> o1.getName().compareTo(o2.getName()));
                     requests = clientRequests.findAllRequests();
                     Platform.runLater(() -> statusBarInfo.setText("Готов к работе"));
                     // Формируем список регионов и заполняем список данными
@@ -193,7 +195,7 @@ public class PrimaryController implements Initializable {
                     root.expandedProperty().set(false);
                     rootVd = TreeViewManipulations.updateTreeViewRecordList(recordsSprVd, "Запросы выплатных дел");
                     rootVd.expandedProperty().set(false);
-                    TreeItem<Record> parentRec = new TreeItem<>(new Record("Запросы"));
+                    TreeItem<Record> parentRec = new TreeItem<>(new Record("Справочник"));
                     TreeItem<Request> parent = TreeViewManipulations.updateTreeViewRequestList(requests);
                     parentRec.getChildren().add(root);
                     parentRec.getChildren().add(rootVd);
@@ -203,29 +205,26 @@ public class PrimaryController implements Initializable {
                     selectionModel = tree.getSelectionModel();
                     MultipleSelectionModel<TreeItem<Request>> selectionModelRequest = treeRequest.getSelectionModel();
                     tree.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
-
                         @Override
                         public void changed(ObservableValue observable, Object oldValue,
-                                Object newValue) {
+                            Object newValue) {
                             selectedRecordItem = (TreeItem<Record>) newValue;
                             recordID = selectedRecordItem.getValue().getId();
                             subjectID.setText(selectedRecordItem.getValue().getSubject());
                             opfrID.setText(selectedRecordItem.getValue().getOpfr());
                             upfrID.setText(selectedRecordItem.getValue().getUpfr());
+                            nameRegion.setText(selectedRecordItem.getValue().getName());
                         }
                     });
-
                     treeRequest.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
-
                         @Override
                         public void changed(ObservableValue observable, Object oldValue,
-                                Object newValue) {
+                            Object newValue) {
                             selectedRequestItem = (TreeItem<Request>) newValue;
                             requestID = selectedRequestItem.getValue().getId();
                             requestShortValue.setText(selectedRequestItem.getValue().getShortName());
                             requestValue.setText(selectedRequestItem.getValue().getName());
                         }
-
                     });
 
                     // При нажатии на кнопку добавить создаём диалоговое окно с формой для ввода нового элемента
@@ -335,7 +334,6 @@ public class PrimaryController implements Initializable {
                             }
                         }
                     });
-
                     delRequestAction.setOnAction(event -> {
                         Dialog<ButtonType> dialog = new Dialog();
                         DialogPane dialogPane = dialog.getDialogPane();
@@ -359,7 +357,6 @@ public class PrimaryController implements Initializable {
                             }
                         }
                     });
-
                     addRequestAction.setOnAction(event -> {
                         Dialog<ButtonType> dialog = new Dialog();
                         DialogPane dialogPane = dialog.getDialogPane();
@@ -384,7 +381,6 @@ public class PrimaryController implements Initializable {
                         StackPane.setAlignment(labelName, Pos.CENTER_LEFT);
                         StackPane.setAlignment(labelShortName, Pos.CENTER_LEFT);
                         vbox.getChildren().addAll(stackPane1, stackPane2, stackPane3, stackPane4);
-
                         dialog.getDialogPane().setMinWidth(500.0);
                         dialog.getDialogPane().getButtonTypes().addAll(
                                 new ButtonType("Добавить", ButtonBar.ButtonData.OK_DONE),
@@ -414,9 +410,8 @@ public class PrimaryController implements Initializable {
                     });
 
                     inputSearchLine.setOnKeyTyped(event -> {
-
                         if (!inputSearchLine.getText().isEmpty() && !inputSearchLine.getText().isBlank()) {
-                            TreeItem<Record> rootSearch = new TreeItem<>(new Record("Запросы"));
+                            TreeItem<Record> rootSearch = new TreeItem<>(new Record("Справочник"));
                             TreeItem<Record> rootSearch1 = new TreeItem<>(new Record("Запросы пенсионно-социального характера"));
                             TreeItem<Record> rootSearch2 = new TreeItem<>(new Record("Запросы выплатных дел"));
                             TreeItem<Record> parentSearch1 = new TreeItem<>();
@@ -425,7 +420,6 @@ public class PrimaryController implements Initializable {
                             List<Record> childListVd = new ArrayList<>();
                             List<Record> parentList = new ArrayList<>();
                             List<Record> parentListVd = new ArrayList<>();
-
                             String target = inputSearchLine.getText().trim().toLowerCase();
                             int parentCount;
                             int childCount;
@@ -512,11 +506,13 @@ public class PrimaryController implements Initializable {
         subjectID.disableProperty().set(true);
         opfrID.disableProperty().set(true);
         upfrID.disableProperty().set(true);
+        nameRegion.disableProperty().set(true);
 
         subjectID.textProperty().addListener((o) -> {
-
             if (selectedRecordItem.valueProperty() != null) {
-                if (selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Запросы")) {
+                if (selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Справочник") ||
+                        selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Запросы пенсионно-социального характера") ||
+                        selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Запросы выплатных дел")) {
                     subjectID.disableProperty().set(true);
                 } else {
                     subjectID.disableProperty().set(false);
@@ -526,9 +522,10 @@ public class PrimaryController implements Initializable {
         });
 
         opfrID.textProperty().addListener((o) -> {
-
             if (selectedRecordItem.valueProperty() != null) {
-                if (selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Запросы")) {
+                if (selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Справочник") ||
+                        selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Запросы пенсионно-социального характера") ||
+                        selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Запросы выплатных дел")) {
                     opfrID.disableProperty().set(true);
                 } else {
                     opfrID.disableProperty().set(false);
@@ -538,16 +535,28 @@ public class PrimaryController implements Initializable {
         });
 
         upfrID.textProperty().addListener((o) -> {
-
             if (selectedRecordItem.valueProperty() != null) {
-                if (selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Запросы")) {
+                if (selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Справочник") ||
+                        selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Запросы пенсионно-социального характера") ||
+                        selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Запросы выплатных дел")) {
                     upfrID.disableProperty().set(true);
                 } else {
                     upfrID.disableProperty().set(false);
                 }
             }
-
         });
+        
+            nameRegion.textProperty().addListener((o) -> {
+            if(selectedRecordItem.valueProperty() != null) {
+                if(selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Справочник") ||
+                        selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Запросы пенсионно-социального характера") ||
+                        selectedRecordItem.valueProperty().get().getName().equalsIgnoreCase("Запросы выплатных дел")) {
+                    nameRegion.disableProperty().set(true);
+                } else {
+                    nameRegion.disableProperty().set(false);
+                }
+            }
+            });
 
         btn.disableProperty().bind(Bindings.notEqual(subjectID.lengthProperty(), 3)
                 .or(Bindings.notEqual(opfrID.lengthProperty(), 3))
@@ -636,6 +645,7 @@ public class PrimaryController implements Initializable {
             record.setOpfr(opfrID.getText());
             record.setUpfr(upfrID.getText());
             record.setId(recordID);
+            record.setName(nameRegion.getText());
             if(selectionModel.getSelectedItems().iterator().next().getValue().getName().equals("Запросы пенсионно-социального характера")
                                             || selectionModel.getSelectedItems().iterator().next().getParent().getValue().getName().equals("Запросы пенсионно-социального характера")
                                             || selectionModel.getSelectedItems().iterator().next().getParent().getParent().getValue().getName().equals("Запросы пенсионно-социального характера")) {
@@ -663,7 +673,7 @@ public class PrimaryController implements Initializable {
         dialog.setHeaderText(null);
         TextFlow textFlow = new TextFlow();
         VBox vBox = new VBox();
-        Text name = new Text("Конвертор запросов Админ");
+        Text name = new Text("Конвертер запросов Админ");
         Text author = new Text("Разработка: Аликин Олег Сергеевич");
         Text info = new Text("Отдел эксплуатации и сопровождения информационных подсистем");
         Text email = new Text("email: alikino@31.sfr.gov.ru");
@@ -697,6 +707,7 @@ public class PrimaryController implements Initializable {
         selectedClient.setSubject(subjectID.getText());
         selectedClient.setOpfr(opfrID.getText());
         selectedClient.setUpfr(upfrID.getText());
+        selectedClient.setName(nameRegion.getText());
 
     }
 
@@ -714,7 +725,7 @@ public class PrimaryController implements Initializable {
         root.expandedProperty().set(false);
         rootVd = TreeViewManipulations.updateTreeViewRecordList(recordsSprVd, "Запросы выплатных дел");
         rootVd.expandedProperty().set(false);
-        TreeItem<Record> parentRec = new TreeItem<>(new Record("Запросы"));
+        TreeItem<Record> parentRec = new TreeItem<>(new Record("Справочник"));
         TreeItem<Request> parent = TreeViewManipulations.updateTreeViewRequestList(requests);
         parentRec.getChildren().add(root);
         parentRec.getChildren().add(rootVd);
@@ -727,7 +738,7 @@ public class PrimaryController implements Initializable {
     void actionInstruction(ActionEvent event) {
 
         Stage stage = new Stage();
-        stage.setTitle("Инструкция по работе с приложением \"Конвертор запросов Админ\"");
+        stage.setTitle("Инструкция по работе с приложением \"Конвертер запросов Админ\"");
         WebView webView = new WebView();
 
         WebEngine webEngine = webView.getEngine();
@@ -766,7 +777,7 @@ public class PrimaryController implements Initializable {
         Label labelUsername = new Label("Имя пользователя");
         TextField fieldUsername = new TextField();
         Label labelPassword = new Label("Пароль");
-        TextField fieldPassword = new TextField();
+        PasswordField fieldPassword = new PasswordField();
         fieldUrl.setText(settings.getUrl());
         fieldDataBaseName.setText(settings.getDbName());
         fieldUsername.setText(settings.getUsername());

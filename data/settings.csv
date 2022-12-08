@@ -1,5 +1,5 @@
-PORT:3306
+PORT:3312
 PASSWORD:qwerty
 DB_NAME:requestconverter
 USER:root
-URL:localhost
+URL:10.41.0.243

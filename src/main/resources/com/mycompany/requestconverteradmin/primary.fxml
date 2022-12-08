@@ -88,22 +88,36 @@
                                               <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
                                             </columnConstraints>
                                             <rowConstraints>
-                                              <RowConstraints maxHeight="271.0" minHeight="10.0" prefHeight="190.0" vgrow="SOMETIMES" />
-                                              <RowConstraints maxHeight="457.0" minHeight="10.0" prefHeight="271.0" vgrow="SOMETIMES" />
+                                              <RowConstraints maxHeight="295.0" minHeight="10.0" prefHeight="260.0" vgrow="SOMETIMES" />
+                                              <RowConstraints maxHeight="457.0" minHeight="10.0" prefHeight="215.0" vgrow="SOMETIMES" />
                                                 <RowConstraints maxHeight="457.0" minHeight="10.0" prefHeight="34.0" vgrow="SOMETIMES" />
                                             </rowConstraints>
                                              <children>
-                                                <VBox alignment="BOTTOM_CENTER">
+                                                <VBox alignment="BOTTOM_CENTER" GridPane.columnSpan="3">
+                                                   <children>
+                                                      <VBox alignment="BOTTOM_CENTER" prefHeight="200.0" prefWidth="100.0" />
+                                                      <Label text="Наименование">
+                                                         <font>
+                                                            <Font name="System Bold" size="12.0" />
+                                                         </font>
+                                                         <VBox.margin>
+                                                            <Insets bottom="5.0" />
+                                                         </VBox.margin>
+                                                      </Label>
+                                                      <TextField fx:id="nameRegion" alignment="TOP_CENTER">
+                                                         <VBox.margin>
+                                                            <Insets bottom="30.0" left="15.0" right="15.0" />
+                                                         </VBox.margin>
+                                                      </TextField>
+                                                   </children>
+                                                </VBox>
+                                                <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" GridPane.rowIndex="1">
                                                    <children>
                                                       <Label text="БО">
                                                          <font>
                                                             <Font name="System Bold" size="12.0" />
                                                          </font>
                                                       </Label>
-                                                   </children>
-                                                </VBox>
-                                                <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" GridPane.rowIndex="1">
-                                                   <children>
                                                       <TextField fx:id="subjectID" alignment="CENTER">
                                                          <VBox.margin>
                                                             <Insets left="15.0" right="15.0" top="5.0" />
@@ -111,8 +125,13 @@
                                                       </TextField>
                                                    </children>
                                                 </VBox>
-                                                <VBox prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                                <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                                    <children>
+                                                      <Label alignment="CENTER" contentDisplay="CENTER" text="ТО" textAlignment="CENTER">
+                                                         <font>
+                                                            <Font name="System Bold" size="12.0" />
+                                                         </font>
+                                                      </Label>
                                                       <TextField fx:id="opfrID" alignment="CENTER">
                                                          <VBox.margin>
                                                             <Insets left="15.0" right="15.0" top="5.0" />
@@ -120,26 +139,14 @@
                                                       </TextField>
                                                    </children>
                                                 </VBox>
-                                                <VBox alignment="BOTTOM_CENTER" prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="1">
-                                                   <children>
-                                                      <Label text="ТО">
-                                                         <font>
-                                                            <Font name="System Bold" size="12.0" />
-                                                         </font>
-                                                      </Label>
-                                                   </children>
-                                                </VBox>
-                                                <VBox alignment="BOTTOM_CENTER" prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="2">
+                                                <VBox alignment="BOTTOM_CENTER" prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="2" />
+                                                <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="2" GridPane.rowIndex="1">
                                                    <children>
                                                       <Label text="РО">
                                                          <font>
                                                             <Font name="System Bold" size="12.0" />
                                                          </font>
                                                       </Label>
-                                                   </children>
-                                                </VBox>
-                                                <VBox prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="2" GridPane.rowIndex="1">
-                                                   <children>
                                                       <TextField fx:id="upfrID" alignment="CENTER">
                                                          <VBox.margin>
                                                             <Insets left="15.0" right="15.0" top="5.0" />
