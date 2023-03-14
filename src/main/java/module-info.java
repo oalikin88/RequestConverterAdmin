@@ -4,6 +4,7 @@ module com.mycompany.requestconverteradmin {
     requires java.sql;
     requires javafx.web;
     requires java.naming;
+    requires java.base;
     
     opens com.mycompany.requestconverteradmin to javafx.fxml;
     opens com.mycompany.requestconverteradmin.data to javafx.base;

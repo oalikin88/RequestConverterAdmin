@@ -14,11 +14,26 @@ import javafx.scene.image.Image;
  */
 public class App extends Application {
 
-    private static Scene scene;
+    private Scene scene;
+    private static Stage stage;
+
+    public static Stage getStage() {
+        return stage;
+    }
+    
+    
+
+    public static void setStage(Stage stage) {
+        App.stage = stage;
+    }
+
+ 
+    
+    
+    
 
     @Override
     public void start(Stage stage) throws IOException {
-        
         scene = new Scene(loadFXML("primary"), 900, 600);
         stage.setScene(scene);
         stage.setTitle("Конвертер запросов Админ");

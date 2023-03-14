@@ -35,8 +35,7 @@ public class Spr {
     }
     
     
-    public void addRecord() {
-        Record record = records.get(records.size() - 1);
+    public void addRecord(Record record) {
         try {
             clientDAO.addRecord(record, this.getType().getTitle());
         } catch (IOException ex) {
